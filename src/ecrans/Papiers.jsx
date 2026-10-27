@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { api, traduireErreur } from '../lib/api.js'
 import { etatAutorisation, formatDate, phraseAutorisation } from '../lib/regles.js'
-import { BoutonDocument, Champ, ChampDocument, Fenetre, Pastille, Vide } from '../ui/kit.jsx'
+import { EnteteXp, Tuile, pluriel } from '../dream/communs.jsx'
+import { BoutonDocument, Champ, ChampDocument, Erreur, Icone, Modale, Vide, tonDe } from '../ui/kit.jsx'
 
 const LIBELLES = { expiree: 'Expiré', bientot: 'Bientôt', valide: 'Valide', permanente: 'Valide', a_completer: 'À compléter' }
 const ORDRE = { expiree: 0, bientot: 1, a_completer: 2, valide: 3, permanente: 4 }
@@ -14,49 +15,48 @@ export default function Papiers({ donnees, peutEcrire, estGerant, recharger }) {
   const compte = (e) => liste.filter((a) => a.etat === e).length
 
   return (
-    <div className="pile">
-      <section className="grille-chiffres">
-        <div className={`chiffre ${compte('expiree') ? 'chiffre-rouge' : 'chiffre-vert'}`}>
-          <div className="chiffre-titre">Expirés</div>
-          <div className="chiffre-valeur">{compte('expiree')}</div>
-          <div className="chiffre-detail">{compte('expiree') ? 'Un client peut les demander à tout moment.' : 'Aucun.'}</div>
-        </div>
-        <div className={`chiffre ${compte('bientot') ? 'chiffre-orange' : ''}`}>
-          <div className="chiffre-titre">À renouveler bientôt</div>
-          <div className="chiffre-valeur">{compte('bientot')}</div>
-          <div className="chiffre-detail">Moins de 60 jours (réglable par papier)</div>
-        </div>
-        <div className="chiffre">
-          <div className="chiffre-titre">À compléter</div>
-          <div className="chiffre-valeur">{compte('a_completer')}</div>
-          <div className="chiffre-detail">Dates ou document manquants</div>
-        </div>
-      </section>
+    <>
+      <EnteteXp surtitre="Obligations" titre="Papiers et autorisations" sousTitre="Agrément, assurances, attestations : chaque papier avec sa date de fin, pour le renouveler à temps.">
+        {peutEcrire && <button className="bouton principal" onClick={() => setOuvert({})}><Icone nom="plus" taille={16} />Ajouter un papier</button>}
+      </EnteteXp>
 
-      {peutEcrire && <button className="bouton bouton-secondaire" onClick={() => setOuvert({})}>+ Ajouter un papier</button>}
+      <div className="xp-grille">
+        <Tuile titre="Expirés" icone="alerte" valeur={String(compte('expiree'))}
+          verdict={compte('expiree') ? { ton: 'mauvais', texte: 'À renouveler' } : { ton: 'bon', texte: 'Aucun' }}
+          pourquoi={compte('expiree') ? 'Un client ou un contrôle peut les demander à tout moment.' : 'Aucun papier expiré.'} />
+        <Tuile titre="À renouveler bientôt" icone="horloge" valeur={String(compte('bientot'))}
+          verdict={compte('bientot') ? { ton: 'vigilance', texte: 'Bientôt' } : null}
+          pourquoi="Moins de 60 jours avant la fin (réglable par papier)." />
+        <Tuile titre="À compléter" icone="document" valeur={String(compte('a_completer'))}
+          pourquoi="Dates ou copie du document manquantes." />
+      </div>
 
-      {liste.length === 0 ? <Vide>Aucun papier enregistré.</Vide> : (
-        <div className="grille-postes">
-          {liste.map((a) => (
-            <button key={a.id} className={`tuile-poste bord-${a.etat}`} onClick={() => setOuvert(a)}>
-              <div className="tuile-tete">
-                <span className="tuile-nom">{a.nom}</span>
-                <Pastille etat={a.etat} texte={LIBELLES[a.etat]} />
-              </div>
-              <div className="petit texte-doux">{[a.organisme, a.numero].filter(Boolean).join(' · ') || '—'}</div>
-              <div className="tuile-conseil">{phraseAutorisation(a)}</div>
-              {a.date_fin && <div className="petit">Jusqu'au {formatDate(a.date_fin)}</div>}
-              {a.document_path ? <div className="petit texte-vert">📎 Document enregistré</div> : <div className="petit texte-orange">Pas de copie enregistrée</div>}
-            </button>
-          ))}
-        </div>
+      {liste.length === 0 ? <Vide titre="Aucun papier enregistré." /> : (
+        <section className="xp-section">
+          <h2 className="xp-section-titre">Tous les papiers <small>{pluriel(liste.length, 'papier', 'papiers')}</small></h2>
+          <div className="xp-grille large">
+            {liste.map((a) => (
+              <Tuile key={a.id} className={`ton-${tonDe(a.etat)}`} titre={a.nom} icone="dossier"
+                verdict={{ ton: tonDe(a.etat), texte: LIBELLES[a.etat] }}
+                valeur={a.date_fin ? formatDate(a.date_fin) : null}
+                pourquoi={phraseAutorisation(a)}
+                conseil={peutEcrire ? 'Ouvrir la fiche' : 'Voir'}
+                onClick={() => setOuvert(a)}>
+                <span className="g7-detail">{[a.organisme, a.numero].filter(Boolean).join(' · ') || 'Organisme et numéro à compléter'}</span>
+                {a.document_path
+                  ? <span className="g7-detail bon">Copie enregistrée</span>
+                  : <span className="g7-detail vigilance">Pas de copie enregistrée</span>}
+              </Tuile>
+            ))}
+          </div>
+        </section>
       )}
 
       {ouvert && (
         <FichePapier a={ouvert} peutEcrire={peutEcrire} estGerant={estGerant}
           fermer={() => setOuvert(null)} enregistre={() => { setOuvert(null); recharger() }} />
       )}
-    </div>
+    </>
   )
 }
 
@@ -101,34 +101,34 @@ function FichePapier({ a, peutEcrire, estGerant, fermer, enregistre }) {
   }
 
   return (
-    <Fenetre
+    <Modale
       titre={a.id ? a.nom : 'Nouveau papier'}
       fermer={fermer}
       pied={peutEcrire && (
         <>
-          {estGerant && a.id && <button className="bouton bouton-danger" onClick={supprimer} disabled={envoi}>Supprimer</button>}
-          <button className="bouton" onClick={enregistrer} disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
+          {estGerant && a.id && <button className="bouton danger" onClick={supprimer} disabled={envoi}>Supprimer</button>}
+          <button className="bouton principal" onClick={enregistrer} disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
         </>
       )}
     >
-      <fieldset disabled={!peutEcrire}>
-        <Champ label="Nom"><input value={f.nom} onChange={maj('nom')} placeholder="Ex. : Agrément du ministère du Travail" /></Champ>
-        <div className="deux-colonnes">
-          <Champ label="Numéro"><input value={f.numero} onChange={maj('numero')} /></Champ>
-          <Champ label="Délivré par"><input value={f.organisme} onChange={maj('organisme')} /></Champ>
+      <fieldset className="g7-champs" disabled={!peutEcrire}>
+        <Champ libelle="Nom"><input value={f.nom} onChange={maj('nom')} placeholder="Ex. : Agrément du ministère du Travail" /></Champ>
+        <div className="g7-deux">
+          <Champ libelle="Numéro"><input value={f.numero} onChange={maj('numero')} /></Champ>
+          <Champ libelle="Délivré par"><input value={f.organisme} onChange={maj('organisme')} /></Champ>
         </div>
-        <div className="deux-colonnes">
-          <Champ label="Valable du"><input type="date" value={f.date_debut} onChange={maj('date_debut')} /></Champ>
-          <Champ label="Jusqu'au" aide="Laisser vide s'il n'expire pas."><input type="date" value={f.date_fin} onChange={maj('date_fin')} /></Champ>
+        <div className="g7-deux">
+          <Champ libelle="Valable du"><input type="date" value={f.date_debut} onChange={maj('date_debut')} /></Champ>
+          <Champ libelle="Jusqu'au" aide="Laisser vide s'il n'expire pas."><input type="date" value={f.date_fin} onChange={maj('date_fin')} /></Champ>
         </div>
-        <Champ label="Prévenir combien de jours avant ?">
+        <Champ libelle="Prévenir combien de jours avant ?">
           <input inputMode="numeric" value={f.rappel_jours} onChange={(e) => setF({ ...f, rappel_jours: e.target.value.replace(/\D/g, '') })} />
         </Champ>
-        <Champ label="Copie du papier"><ChampDocument fichier={fichier} setFichier={setFichier} cheminExistant={a.document_path} /></Champ>
-        <Champ label="Note"><input value={f.note} onChange={maj('note')} /></Champ>
+        <Champ libelle="Copie du papier"><ChampDocument fichier={fichier} setFichier={setFichier} cheminExistant={a.document_path} /></Champ>
+        <Champ libelle="Note"><input value={f.note} onChange={maj('note')} /></Champ>
       </fieldset>
       {!peutEcrire && <BoutonDocument chemin={a.document_path} />}
-      {erreur && <p className="texte-erreur">{erreur}</p>}
-    </Fenetre>
+      <Erreur message={erreur} />
+    </Modale>
   )
 }

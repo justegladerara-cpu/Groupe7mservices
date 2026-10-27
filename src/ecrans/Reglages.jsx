@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { api, modeDemo, traduireErreur } from '../lib/api.js'
 import { GROUPES, MOIS, formatFcfa, identifiantAffiche } from '../lib/regles.js'
 import { supabase } from '../lib/supabase.js'
-import { Champ, ChampMontant, Fenetre } from '../ui/kit.jsx'
+import { EnteteXp } from '../dream/communs.jsx'
+import { Avatar, Champ, ChampMontant, Erreur, Icone, Modale, iconePoste } from '../ui/kit.jsx'
 
 const PERIODICITES = {
   mensuelle: 'Chaque mois',
@@ -22,40 +23,49 @@ function resumeEcheance(p) {
 
 export default function Reglages({ donnees, estGerant, recharger, email, membre }) {
   const [ouvert, setOuvert] = useState(null)
+  const role = membre.role === 'gerant' ? 'Gérant (tous les droits)' : membre.role === 'saisie' ? 'Saisie des dépenses' : 'Lecture seule'
   return (
-    <div className="pile">
-      <section className="carte">
-        <div className="titre-section">
-          <h2>Postes de dépense</h2>
-          {estGerant && <button className="bouton bouton-petit" onClick={() => setOuvert({})}>+ Nouveau poste</button>}
+    <>
+      <EnteteXp surtitre="Organisation" titre="Paramètres" sousTitre="Les postes de dépense, leurs montants habituels et leurs dates de paiement. Votre compte et votre mot de passe." />
+
+      <section className="xp-section">
+        <h2 className="xp-section-titre">Mon compte</h2>
+        <div className="xp-carte g7-champs">
+          <div className="utilisateur">
+            <Avatar nom={membre.nom} />
+            <div className="xp-ligne-texte">
+              <strong>{identifiantAffiche(email) === email ? email : membre.nom}</strong>
+              <small>{role}</small>
+            </div>
+          </div>
+          {!modeDemo && <ChangerMotDePasse />}
+          {!modeDemo && <p className="g7-note">Pour ajouter une personne (comptable, secrétaire), demandez à Agence Elite : elle sera ajoutée avec le bon niveau d'accès.</p>}
         </div>
-        <p className="texte-doux petit">Indiquez le montant habituel et la date de paiement de chaque poste régulier : le tableau de bord saura alors ce qui reste à payer et préviendra avant chaque échéance.</p>
-        <ul className="liste">
-          {donnees.postes.map((p) => (
-            <li key={p.id} className={`ligne-poste ${p.actif ? '' : 'inactif'}`}>
-              <span className="ligne-icone" aria-hidden>{p.icone}</span>
-              <div className="ligne-milieu">
-                <div className="ligne-titre">{p.nom} {!p.actif && <span className="texte-doux">(arrêté)</span>}</div>
-                <div className="ligne-sous">{GROUPES[p.groupe]?.nom} · {resumeEcheance(p)}</div>
-              </div>
-              <div className="ligne-montant">
-                {p.montant_habituel ? formatFcfa(p.montant_habituel) : <span className="texte-doux">—</span>}
-                {estGerant && <div><button className="lien" onClick={() => setOuvert(p)}>Modifier</button></div>}
-              </div>
-            </li>
-          ))}
-        </ul>
       </section>
 
-      <section className="carte">
-        <h2>Mon compte</h2>
-        <p>Identifiant : <b>{identifiantAffiche(email) === email ? email : membre.nom}</b> · {membre.role === 'gerant' ? 'Gérant (tous les droits)' : membre.role === 'saisie' ? 'Saisie des dépenses' : 'Lecture seule'}</p>
-        {!modeDemo && <ChangerMotDePasse />}
-        {!modeDemo && <p className="texte-doux petit">Pour ajouter une personne (comptable, secrétaire), demandez à Agence Elite : elle sera ajoutée avec le bon niveau d'accès.</p>}
+      <section className="xp-section">
+        <h2 className="xp-section-titre">
+          Postes de dépense
+          {estGerant && <button className="bouton principal" onClick={() => setOuvert({})}><Icone nom="plus" taille={16} />Nouveau poste</button>}
+        </h2>
+        <p className="g7-note">Indiquez le montant habituel et la date de paiement de chaque poste régulier : le tableau de bord saura alors ce qui reste à payer et préviendra avant chaque échéance.</p>
+        <div className="xp-liste">
+          {donnees.postes.map((p) => (
+            <div key={p.id} className="xp-ligne" style={p.actif ? undefined : { opacity: 0.55 }}>
+              <span className="g7-puce-icone"><Icone nom={iconePoste(p)} taille={16} /></span>
+              <div className="xp-ligne-texte">
+                <strong>{p.nom} {!p.actif && <span className="texte-doux">(arrêté)</span>}</strong>
+                <small>{GROUPES[p.groupe]?.nom} · {resumeEcheance(p)}</small>
+                {estGerant && <span className="g7-actions"><button className="lien" onClick={() => setOuvert(p)}>Modifier</button></span>}
+              </div>
+              <span className="xp-ligne-valeur">{p.montant_habituel ? formatFcfa(p.montant_habituel) : <span className="texte-doux">—</span>}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
       {ouvert && <FichePoste p={ouvert} fermer={() => setOuvert(null)} enregistre={() => { setOuvert(null); recharger() }} />}
-    </div>
+    </>
   )
 }
 
@@ -90,31 +100,28 @@ function FichePoste({ p, fermer, enregistre }) {
 
   const regulier = f.periodicite !== 'ponctuelle'
   return (
-    <Fenetre titre={p.id ? `Modifier « ${p.nom} »` : 'Nouveau poste'} fermer={fermer}
-      pied={<button className="bouton" onClick={enregistrer} disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>}>
-      <div className="deux-colonnes colonnes-icone">
-        <Champ label="Icône"><input value={f.icone} maxLength={4} onChange={maj('icone')} /></Champ>
-        <Champ label="Nom"><input value={f.nom} onChange={maj('nom')} /></Champ>
-      </div>
-      <Champ label="Famille">
+    <Modale titre={p.id ? `Modifier « ${p.nom} »` : 'Nouveau poste'} fermer={fermer}
+      pied={<button className="bouton principal" onClick={enregistrer} disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>}>
+      <Champ libelle="Nom"><input value={f.nom} onChange={maj('nom')} /></Champ>
+      <Champ libelle="Famille">
         <select value={f.groupe} onChange={maj('groupe')}>
           {Object.entries(GROUPES).map(([k, g]) => <option key={k} value={k}>{g.nom}</option>)}
         </select>
       </Champ>
-      <Champ label="Montant habituel" aide="Sert à savoir ce qui reste à payer et à repérer une facture anormale.">
+      <Champ libelle="Montant habituel" aide="Sert à savoir ce qui reste à payer et à repérer une facture anormale.">
         <ChampMontant valeur={f.montant_habituel} onChange={(v) => setF({ ...f, montant_habituel: v })} />
       </Champ>
-      <Champ label="Revient">
+      <Champ libelle="Revient">
         <select value={f.periodicite} onChange={maj('periodicite')}>
           {Object.entries(PERIODICITES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
       </Champ>
       {regulier && (
-        <div className="deux-colonnes">
-          <Champ label="À payer le (jour)">
+        <div className="g7-deux">
+          <Champ libelle="À payer le (jour)">
             <input type="number" min="1" max="31" value={f.jour_echeance} onChange={maj('jour_echeance', true)} />
           </Champ>
-          <Champ label="De quel mois ?">
+          <Champ libelle="De quel mois ?">
             <select value={f.decalage_mois} onChange={maj('decalage_mois', true)}>
               <option value={0}>Le mois même</option>
               <option value={1}>Le mois suivant</option>
@@ -123,18 +130,18 @@ function FichePoste({ p, fermer, enregistre }) {
         </div>
       )}
       {regulier && f.periodicite !== 'mensuelle' && (
-        <Champ label="Premier mois de paiement dans l'année">
+        <Champ libelle="Premier mois de paiement dans l'année">
           <select value={f.mois_reference} onChange={maj('mois_reference', true)}>
             {MOIS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
           </select>
         </Champ>
       )}
-      <Champ label="Payé à (habituellement)"><input value={f.beneficiaire} onChange={maj('beneficiaire')} /></Champ>
-      <label className="case">
+      <Champ libelle="Payé à (habituellement)"><input value={f.beneficiaire} onChange={maj('beneficiaire')} /></Champ>
+      <label className="g7-case">
         <input type="checkbox" checked={f.actif} onChange={(e) => setF({ ...f, actif: e.target.checked })} /> Poste en cours d'utilisation
       </label>
-      {erreur && <p className="texte-erreur">{erreur}</p>}
-    </Fenetre>
+      <Erreur message={erreur} />
+    </Modale>
   )
 }
 
@@ -160,23 +167,23 @@ function ChangerMotDePasse() {
   if (!ouvert) {
     return (
       <>
-        <button className="bouton bouton-secondaire" onClick={() => setOuvert(true)}>Changer mon mot de passe</button>
-        {etat.ok && <p className="texte-vert">{etat.ok}</p>}
+        <div className="g7-boutons"><button className="bouton" onClick={() => setOuvert(true)}><Icone nom="cle" taille={16} />Changer mon mot de passe</button></div>
+        {etat.ok && <p className="texte-ok">{etat.ok}</p>}
       </>
     )
   }
   return (
-    <form className="pile-serree" onSubmit={enregistrer}>
-      <Champ label="Nouveau mot de passe">
+    <form className="g7-champs g7-form" onSubmit={enregistrer}>
+      <Champ libelle="Nouveau mot de passe">
         <input type="password" autoComplete="new-password" value={nouveau} onChange={(e) => setNouveau(e.target.value)} autoFocus />
       </Champ>
-      <Champ label="Le retaper">
+      <Champ libelle="Le retaper">
         <input type="password" autoComplete="new-password" value={confirmation} onChange={(e) => setConfirmation(e.target.value)} />
       </Champ>
-      {etat.erreur && <p className="texte-erreur">{etat.erreur}</p>}
-      <div className="rangee">
-        <button type="button" className="bouton bouton-secondaire" onClick={() => setOuvert(false)} disabled={etat.envoi}>Annuler</button>
-        <button className="bouton" disabled={etat.envoi}>{etat.envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
+      <Erreur message={etat.erreur} />
+      <div className="g7-boutons">
+        <button type="button" className="bouton" onClick={() => setOuvert(false)} disabled={etat.envoi}>Annuler</button>
+        <button className="bouton principal" disabled={etat.envoi}>{etat.envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
       </div>
     </form>
   )

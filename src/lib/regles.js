@@ -189,12 +189,12 @@ export function controlesCnss(declaration, periode) {
 // ---------- Synthèse ----------
 
 export const GROUPES = {
-  agents: { nom: 'Les agents', couleur: '#2563eb' },
-  etat: { nom: "L'État", couleur: '#b45309' },
-  bureau: { nom: 'Le bureau', couleur: '#0f766e' },
-  terrain: { nom: 'Le terrain', couleur: '#7c3aed' },
-  protection: { nom: 'Assurances', couleur: '#be185d' },
-  autre: { nom: 'Autres', couleur: '#64748b' },
+  agents: { nom: 'Les agents', couleur: '#FF5A0F' },
+  etat: { nom: "L'État", couleur: '#F2A93B' },
+  bureau: { nom: 'Le bureau', couleur: '#2FBF71' },
+  terrain: { nom: 'Le terrain', couleur: '#8AA4FF' },
+  protection: { nom: 'Assurances', couleur: '#C9A0FF' },
+  autre: { nom: 'Autres', couleur: '#8C8577' },
 }
 
 export function sommeParCle(lignes, cle, valeur = 'montant') {
