@@ -37,7 +37,7 @@ Sans fichier `.env`, l'application s'ouvre en **démonstration** avec des chiffr
    Rôles : `gerant` (tout), `saisie` (ajoute et modifie, ne supprime pas), `lecteur` (lecture seule).
 4. **Authentication › URL Configuration** : mettre l'adresse du site dans *Site URL* (pour « Mot de passe oublié »).
 
-### 2. Site (Cloudflare Pages)
+### 2. Site (GitHub Pages)
 
 - En ligne : chaque fusion dans `main` construit le site et le publie dans la branche `gh-pages` (GitHub Pages), voir `.github/workflows/pages.yml`.
 - L'adresse et la clé publique Supabase sont dans ce workflow (la clé publique n'est pas un secret : les données sont protégées par les règles de la base).
