@@ -169,6 +169,8 @@ begin
   return v_n;
 end $$;
 revoke all on function public.g7_preparer_mois(date) from public, anon;
+revoke all on function public.g7_role() from public, anon;
+grant execute on function public.g7_role() to authenticated;
 grant execute on function public.g7_preparer_mois(date) to authenticated;
 
 -- ---------- Documents (reçus, accusés, autorisations) ----------
