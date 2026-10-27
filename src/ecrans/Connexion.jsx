@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { traduireErreur } from '../lib/api.js'
 import { DOMAINE_IDENTIFIANTS, emailDeConnexion } from '../lib/regles.js'
+import { Champ, Erreur } from '../ui/kit.jsx'
 
 export default function Connexion({ recuperation, finRecuperation }) {
   const [email, setEmail] = useState('')
@@ -52,37 +53,50 @@ export default function Connexion({ recuperation, finRecuperation }) {
   }
 
   return (
-    <div className="page-centre">
-      <form className="carte carte-etroite" onSubmit={recuperation ? nouveau : seConnecter}>
-        <div className="marque marque-centre">
-          <span className="logo">G7M</span>
-          <div>
-            <div className="marque-nom">Groupe7M services</div>
-            <div className="marque-sous">Tableau de bord</div>
-          </div>
+    <CadreAuth>
+      <form className="connexion-carte" onSubmit={recuperation ? nouveau : seConnecter}>
+        <div className="marque">
+          <span className="marque-logo g7">G7M</span>
+          <span className="marque-texte"><strong>Groupe7M services</strong><small>Tableau de bord</small></span>
+        </div>
+        <div>
+          <h1>{recuperation ? 'Nouveau mot de passe' : 'Bienvenue'}</h1>
+          <p className="texte-doux">{recuperation ? 'Choisissez un mot de passe d’au moins 8 caractères.' : 'Connectez-vous pour voir où va l’argent de la société.'}</p>
         </div>
         {recuperation ? (
-          <label className="champ">
-            <span className="champ-label">Nouveau mot de passe</span>
+          <Champ libelle="Nouveau mot de passe">
             <input type="password" autoComplete="new-password" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)} autoFocus />
-          </label>
+          </Champ>
         ) : (
           <>
-            <label className="champ">
-              <span className="champ-label">Identifiant</span>
+            <Champ libelle="Identifiant">
               <input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
-            </label>
-            <label className="champ">
-              <span className="champ-label">Mot de passe</span>
+            </Champ>
+            <Champ libelle="Mot de passe">
               <input type="password" autoComplete="current-password" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)} />
-            </label>
+            </Champ>
           </>
         )}
-        {erreur && <p className="texte-erreur">{erreur}</p>}
-        {message && <p className="texte-vert">{message}</p>}
-        <button className="bouton bouton-large" disabled={envoi}>{envoi ? 'Patientez…' : recuperation ? 'Enregistrer' : 'Se connecter'}</button>
-        {!recuperation && <button type="button" className="lien" onClick={oublie} disabled={envoi}>Mot de passe oublié ?</button>}
+        <Erreur message={erreur} />
+        {message && <p className="texte-ok">{message}</p>}
+        <button className="bouton principal grand" disabled={envoi}>{envoi ? 'Patientez…' : recuperation ? 'Enregistrer' : 'Se connecter'}</button>
+        {!recuperation && (
+          <div className="auth-pied">
+            <button type="button" className="lien" onClick={oublie} disabled={envoi}>Mot de passe oublié ?</button>
+          </div>
+        )}
       </form>
+    </CadreAuth>
+  )
+}
+
+// Fond et centrage des écrans de connexion, comme The Dream.
+export function CadreAuth({ children }) {
+  return (
+    <div className="connexion auth auth-fond-degrade">
+      <div className="auth-grille">
+        <div className="auth-zone">{children}</div>
+      </div>
     </div>
   )
 }

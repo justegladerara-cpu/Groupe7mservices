@@ -4,7 +4,8 @@ import {
   calculCnss, controlesCnss, debutSuiviCnss, dateIso, decalerPeriode, etatMoisCnss, formatDate, formatFcfa, formatNombre,
   nomPeriode, periodeDe,
 } from '../lib/regles.js'
-import { BoutonDocument, Champ, ChampDocument, ChampMontant, Fenetre, Pastille } from '../ui/kit.jsx'
+import { EnteteXp, Tuile, pluriel } from '../dream/communs.jsx'
+import { BoutonDocument, Champ, ChampDocument, ChampMontant, Erreur, Icone, Modale, Pastille, tonDe } from '../ui/kit.jsx'
 
 const LIBELLES = { paye: 'Payé', declare: 'Déclaré', en_retard: 'En retard', a_declarer: 'À déclarer', pas_encore: '—' }
 
@@ -27,50 +28,44 @@ export default function Cnss({ donnees, peutEcrire, recharger, ouvrirSaisie }) {
   const retards = mois.filter((m) => m.etat === 'en_retard').length
 
   return (
-    <div className="pile">
-      <section className="grille-chiffres">
-        <div className={`chiffre ${retards ? 'chiffre-rouge' : 'chiffre-vert'}`}>
-          <div className="chiffre-titre">Mois en retard</div>
-          <div className="chiffre-valeur">{retards}</div>
-          <div className="chiffre-detail">{retards ? 'Chaque mois de retard peut coûter des majorations.' : 'Toutes les déclarations sont à jour.'}</div>
-        </div>
-        <div className="chiffre">
-          <div className="chiffre-titre">Déclaré sur 12 mois</div>
-          <div className="chiffre-valeur">{formatFcfa(totalDeclare)}</div>
-          <div className="chiffre-detail">Payé : {formatFcfa(totalPaye)}</div>
-        </div>
-        <div className="chiffre">
-          <div className="chiffre-titre">Reste dû</div>
-          <div className="chiffre-valeur">{formatFcfa(Math.max(0, totalDeclare - totalPaye))}</div>
-          <div className="chiffre-detail">À payer le {jourLimite} du mois suivant</div>
+    <>
+      <EnteteXp surtitre="Obligations" titre="CNSS" sousTitre="Chaque mois : la déclaration, l'accusé de réception et le paiement. Un mois oublié coûte des majorations.">
+        {peutEcrire && (
+          <button className="bouton" onClick={() => {
+            const p = decalerPeriode(debut, -1)
+            setOuvert({ periode: p, declaration: null, paye: 0, alertes: [], ...etatMoisCnss({ periode: p, declaration: null, paye: 0, jourLimite }) })
+          }}><Icone nom="plus" taille={16} />Saisir {nomPeriode(decalerPeriode(debut, -1))}</button>
+        )}
+      </EnteteXp>
+
+      <div className="xp-grille">
+        <Tuile titre="Mois en retard" icone="alerte" valeur={String(retards)}
+          verdict={retards ? { ton: 'mauvais', texte: 'À régulariser' } : { ton: 'bon', texte: 'À jour' }}
+          pourquoi={retards ? 'Chaque mois de retard peut coûter des majorations.' : 'Toutes les déclarations sont à jour.'} />
+        <Tuile titre="Déclaré sur 12 mois" icone="document" valeur={formatFcfa(totalDeclare)} pourquoi={`Payé : ${formatFcfa(totalPaye)}`} />
+        <Tuile titre="Reste dû" icone="billet" valeur={formatFcfa(Math.max(0, totalDeclare - totalPaye))}
+          verdict={totalDeclare - totalPaye > 0 ? { ton: 'vigilance', texte: 'À payer' } : null}
+          pourquoi={`À payer le ${jourLimite} du mois suivant.`} />
+      </div>
+
+      <section className="xp-section">
+        <h2 className="xp-section-titre">Mois par mois <small>depuis {nomPeriode(debut)}</small></h2>
+        <div className="xp-grille">
+          {mois.map((m) => (
+            <Tuile key={m.periode} className={`ton-${tonDe(m.etat)}`} titre={nomPeriode(m.periode)} icone="calendrier"
+              valeur={m.declaration?.montant_declare ? formatFcfa(m.declaration.montant_declare) : '—'}
+              verdict={{ ton: tonDe(m.etat), texte: LIBELLES[m.etat] }}
+              pourquoi={m.phrase}
+              conseil={m.etat === 'pas_encore' ? null : peutEcrire ? 'Ouvrir le mois' : 'Voir le détail'}
+              onClick={m.etat === 'pas_encore' ? undefined : () => setOuvert(m)}>
+              {m.declaration?.assures ? <span className="g7-detail">{pluriel(m.declaration.assures, 'assuré')} · brut {formatFcfa(m.declaration.brut)}</span> : null}
+              {m.alertes.length > 0 && <span className="g7-detail mauvais">{pluriel(m.alertes.length, 'point', 'points')} à vérifier</span>}
+            </Tuile>
+          ))}
         </div>
       </section>
 
-      <div className="grille-mois">
-        {mois.map((m) => (
-          <button key={m.periode} className={`tuile-mois bord-${m.etat}`} onClick={() => setOuvert(m)} disabled={m.etat === 'pas_encore'}>
-            <div className="tuile-tete">
-              <span className="tuile-nom">{nomPeriode(m.periode)}</span>
-              <Pastille etat={m.etat} texte={LIBELLES[m.etat]} />
-            </div>
-            {m.declaration?.montant_declare ? (
-              <div className="tuile-montant">{formatFcfa(m.declaration.montant_declare)}</div>
-            ) : <div className="tuile-montant texte-doux">—</div>}
-            <div className="tuile-conseil">{m.phrase}</div>
-            {m.declaration?.assures ? <div className="petit texte-doux">{m.declaration.assures} assurés · brut {formatFcfa(m.declaration.brut)}</div> : null}
-            {m.alertes.length > 0 && <div className="petit texte-rouge">⚠ {m.alertes.length} point(s) à vérifier</div>}
-          </button>
-        ))}
-      </div>
-
-      <p className="texte-doux petit">Le suivi commence en {nomPeriode(debut)}, mois de la plus ancienne déclaration saisie. </p>
-      {peutEcrire && (
-        <button className="bouton bouton-secondaire" onClick={() => {
-          const p = decalerPeriode(debut, -1)
-          setOuvert({ periode: p, declaration: null, paye: 0, alertes: [], ...etatMoisCnss({ periode: p, declaration: null, paye: 0, jourLimite }) })
-        }}>+ Saisir {nomPeriode(decalerPeriode(debut, -1))}</button>
-      )}
-      <p className="texte-doux petit">Taux utilisés : 24,28 % du brut (pensions 12 %, prestations familiales 10,03 %, risques professionnels 2,25 %), comme sur les accusés de la CNSS. Date limite réglable dans Réglages › CNSS (le {jourLimite} du mois suivant par défaut, à confirmer avec le comptable).</p>
+      <p className="g7-note">Le suivi commence en {nomPeriode(debut)}, mois de la plus ancienne déclaration saisie. Taux utilisés : 24,28 % du brut (pensions 12 %, prestations familiales 10,03 %, risques professionnels 2,25 %), comme sur les accusés de la CNSS. Date limite : le {jourLimite} du mois suivant (réglable dans Paramètres, poste CNSS).</p>
 
       {ouvert && (
         <FicheMois
@@ -81,7 +76,7 @@ export default function Cnss({ donnees, peutEcrire, recharger, ouvrirSaisie }) {
           payer={() => { setOuvert(null); ouvrirSaisie({ poste_id: poste?.id, periode: ouvert.periode, montant: Math.max(0, Number(ouvert.declaration?.montant_declare || 0) - ouvert.paye) || '' }) }}
         />
       )}
-    </div>
+    </>
   )
 }
 
@@ -127,67 +122,67 @@ function FicheMois({ m, peutEcrire, fermer, enregistre, payer }) {
   }
 
   return (
-    <Fenetre
+    <Modale
       titre={`CNSS · ${nomPeriode(m.periode)}`}
       fermer={fermer}
       pied={peutEcrire && (
         <>
-          {d.montant_declare > m.paye && <button className="bouton bouton-secondaire" onClick={payer} disabled={envoi}>Enregistrer un paiement</button>}
-          <button className="bouton" onClick={enregistrer} disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
+          {d.montant_declare > m.paye && <button className="bouton" onClick={payer} disabled={envoi}>Enregistrer un paiement</button>}
+          <button className="bouton principal" onClick={enregistrer} disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
         </>
       )}
     >
       <p><Pastille etat={m.etat} texte={LIBELLES[m.etat]} /> {m.phrase} <span className="texte-doux">Date limite : {formatDate(m.limite)}.</span></p>
       <p className="texte-doux petit">Payé pour ce mois : {formatFcfa(m.paye)}.</p>
-      <fieldset disabled={!peutEcrire}>
-        <div className="deux-colonnes">
-          <Champ label="Nombre d'assurés">
+      <fieldset className="g7-champs" disabled={!peutEcrire}>
+        <div className="g7-deux">
+          <Champ libelle="Nombre d'assurés">
             <input inputMode="numeric" value={assures} onChange={(e) => setAssures(e.target.value.replace(/\D/g, ''))} />
           </Champ>
-          <Champ label="Agents sans numéro CNSS">
+          <Champ libelle="Agents sans numéro CNSS">
             <input inputMode="numeric" value={nonImm} onChange={(e) => setNonImm(e.target.value.replace(/\D/g, ''))} />
           </Champ>
         </div>
-        <Champ label="Total des salaires bruts">
+        <Champ libelle="Total des salaires bruts">
           <ChampMontant valeur={brut} onChange={setBrut} />
         </Champ>
         {calcul && (
-          <div className="calcul">
+          <div className="g7-calcul">
             <div>Cotisation attendue : <b>{formatFcfa(calcul.total)}</b></div>
-            <div className="petit texte-doux">
+            <small>
               Pensions {formatNombre(calcul.pvid)} · Prestations familiales {formatNombre(calcul.pf)} · Risques pro {formatNombre(calcul.rp)}
               {' · '}dont {formatNombre(calcul.partSalarie)} retenus aux agents et {formatNombre(calcul.partEmployeur)} à la charge de la société
-            </div>
+            </small>
             {peutEcrire && Number(declare) !== calcul.total && (
               <button type="button" className="lien" onClick={() => setDeclare(calcul.total)}>Reporter ce montant comme déclaré</button>
             )}
           </div>
         )}
-        <Champ label="Montant déclaré (sur l'accusé)">
+        <Champ libelle="Montant déclaré (sur l'accusé)">
           <ChampMontant valeur={declare} onChange={setDeclare} />
         </Champ>
-        <div className="deux-colonnes">
-          <Champ label="Déclaré le">
+        <div className="g7-deux">
+          <Champ libelle="Déclaré le">
             <input type="date" value={dateDecl} max={dateIso(new Date())} onChange={(e) => setDateDecl(e.target.value)} />
           </Champ>
-          <Champ label="Mois écrit sur l'accusé" aide="Pour repérer une déclaration enregistrée sur le mauvais mois.">
+          <Champ libelle="Mois écrit sur l'accusé" aide="Pour repérer une déclaration enregistrée sur le mauvais mois.">
             <select value={periodeAccuse} onChange={(e) => setPeriodeAccuse(e.target.value)}>
               {choixAccuse.map((p) => <option key={p} value={p}>{nomPeriode(p)}</option>)}
             </select>
           </Champ>
         </div>
-        <Champ label="Accusé de réception">
+        <Champ libelle="Accusé de réception">
           <ChampDocument fichier={fichier} setFichier={setFichier} cheminExistant={d.accuse_path} />
         </Champ>
-        <Champ label="Note">
+        <Champ libelle="Note">
           <input value={note} onChange={(e) => setNote(e.target.value)} />
         </Champ>
       </fieldset>
       {!peutEcrire && d.accuse_path && <BoutonDocument chemin={d.accuse_path} texte="Voir l'accusé" />}
       {alertes.length > 0 && (
-        <ul className="alertes-liste">{alertes.map((a) => <li key={a}>⚠ {a}</li>)}</ul>
+        <ul className="g7-alertes">{alertes.map((a) => <li key={a}>{a}</li>)}</ul>
       )}
-      {erreur && <p className="texte-erreur">{erreur}</p>}
-    </Fenetre>
+      <Erreur message={erreur} />
+    </Modale>
   )
 }

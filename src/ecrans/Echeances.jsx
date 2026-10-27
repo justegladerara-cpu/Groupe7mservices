@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { api, traduireErreur } from '../lib/api.js'
 import { formatDate, formatFcfa, joursAvant, nomPeriode } from '../lib/regles.js'
-import { Pastille, Vide } from '../ui/kit.jsx'
+import { EnteteXp, Tuile, pluriel } from '../dream/communs.jsx'
+import { Erreur, Icone, Pastille, Vide, iconePoste, tonDe } from '../ui/kit.jsx'
 
 function Ligne({ e, peutEcrire, estGerant, ouvrirSaisie, recharger, setErreur }) {
   const j = joursAvant(e.date_limite)
   const quand = e.etat === 'payee' ? `Payé ${formatFcfa(e.montantPaye)}`
-    : j < 0 ? `Dû depuis ${-j} jour(s)` : j === 0 ? "Dû aujourd'hui" : `Dû dans ${j} jour(s)`
+    : j < 0 ? `Dû depuis ${pluriel(-j, 'jour')}` : j === 0 ? "Dû aujourd'hui" : `Dû dans ${pluriel(j, 'jour')}`
 
   async function changer(champs) {
     try {
@@ -25,32 +26,32 @@ function Ligne({ e, peutEcrire, estGerant, ouvrirSaisie, recharger, setErreur })
   }
 
   return (
-    <li className="ligne-echeance">
-      <span className="ligne-icone" aria-hidden>{e.poste.icone}</span>
-      <div className="ligne-milieu">
-        <div className="ligne-titre">{e.poste.nom} <span className="texte-doux">· {nomPeriode(e.periode)}</span></div>
-        <div className="ligne-sous">Limite : {formatDate(e.date_limite)} · {quand}</div>
-        <div className="ligne-actions">
+    <div className="xp-ligne">
+      <span className={`g7-puce-icone ${tonDe(e.etat)}`}><Icone nom={iconePoste(e.poste)} taille={16} /></span>
+      <div className="xp-ligne-texte">
+        <strong>{e.poste.nom} <span className="texte-doux">· {nomPeriode(e.periode)}</span></strong>
+        <small>Limite : {formatDate(e.date_limite)} · {quand}</small>
+        <span className="g7-actions">
           <Pastille etat={e.etat} />
           {peutEcrire && e.etat !== 'payee' && (
-            <button className="bouton bouton-petit" onClick={() => ouvrirSaisie({ poste_id: e.poste_id, periode: e.periode, montant: e.reste || '' })}>Payer</button>
+            <button className="bouton principal petit" onClick={() => ouvrirSaisie({ poste_id: e.poste_id, periode: e.periode, montant: e.reste || '' })}>Payer</button>
           )}
           {peutEcrire && <button className="lien" onClick={changerMontant}>Montant</button>}
           {estGerant && e.etat !== 'payee' && (
-            <button className="lien lien-doux" onClick={() => window.confirm(`Rien à payer pour ${e.poste.nom} en ${nomPeriode(e.periode)} ?`) && changer({ ignoree: true })}>Rien à payer</button>
+            <button className="lien" onClick={() => window.confirm(`Rien à payer pour ${e.poste.nom} en ${nomPeriode(e.periode)} ?`) && changer({ ignoree: true })}>Rien à payer</button>
           )}
-        </div>
+        </span>
       </div>
-      <div className="ligne-montant">
+      <span className="xp-ligne-valeur">
         {e.montant_prevu ? formatFcfa(e.montant_prevu) : <span className="texte-doux">Montant ?</span>}
-        {e.montantPaye > 0 && e.etat !== 'payee' && <div className="petit texte-doux">payé {formatFcfa(e.montantPaye)}</div>}
-      </div>
-    </li>
+        {e.montantPaye > 0 && e.etat !== 'payee' && <small>payé {formatFcfa(e.montantPaye)}</small>}
+      </span>
+    </div>
   )
 }
 
 export default function Echeances(props) {
-  const { vue, periode } = props
+  const { vue, periode, choixMois } = props
   const [erreur, setErreur] = useState('')
   const retards = vue.enRetard.filter((e) => e.periode !== periode)
   const duMois = vue.echeancesMois
@@ -58,31 +59,41 @@ export default function Echeances(props) {
   const tri = [...duMois].sort((a, b) => ordre[a.etat] - ordre[b.etat] || a.date_limite.localeCompare(b.date_limite))
   const paye = duMois.filter((e) => e.etat === 'payee').length
   const commun = { ...props, setErreur }
+  const montantRetards = retards.reduce((s, e) => s + Number(e.reste || 0), 0)
 
   return (
-    <div className="pile">
-      {erreur && <p className="texte-erreur">{erreur}</p>}
+    <>
+      <EnteteXp surtitre="Argent" titre="À payer" sousTitre="Les paiements réguliers du mois (loyer, CNSS, internet…) et ce qui est resté impayé avant.">
+        {choixMois}
+      </EnteteXp>
+
+      <div className="xp-grille">
+        <Tuile titre="Reste à payer" icone="echeance" valeur={formatFcfa(vue.resteAPayer)}
+          verdict={vue.resteAPayer === 0 && duMois.length ? { ton: 'bon', texte: 'Réglé' } : null}
+          pourquoi={`${paye} sur ${duMois.length} échéances payées.`}>
+          {duMois.length > 0 && <span className="g7-progression"><span style={{ width: `${(paye / duMois.length) * 100}%` }} /></span>}
+        </Tuile>
+        <Tuile titre="Impayés des mois précédents" icone="alerte" valeur={String(retards.length)}
+          verdict={retards.length ? { ton: 'mauvais', texte: 'En retard' } : { ton: 'bon', texte: 'Aucun' }}
+          pourquoi={retards.length ? (montantRetards ? `${formatFcfa(montantRetards)} restent dus.` : 'Montants à préciser.') : 'Rien ne traîne des mois précédents.'} />
+      </div>
+
+      <Erreur message={erreur} />
+
       {retards.length > 0 && (
-        <section className="carte carte-rouge">
-          <h2>Restés impayés des mois précédents ({retards.length})</h2>
-          <ul className="liste">{retards.map((e) => <Ligne key={e.id} e={e} {...commun} />)}</ul>
+        <section className="xp-section">
+          <h2 className="xp-section-titre">Restés impayés des mois précédents <small>{pluriel(retards.length, 'échéance', 'échéances')}</small></h2>
+          <div className="xp-liste">{retards.map((e) => <Ligne key={e.id} e={e} {...commun} />)}</div>
         </section>
       )}
-      <section className="carte">
-        <div className="titre-section">
-          <h2>Échéances de {nomPeriode(periode)}</h2>
-          <span className="texte-doux">{paye} / {duMois.length} payées</span>
-        </div>
-        {duMois.length > 0 && (
-          <div className="progression" aria-label={`${paye} sur ${duMois.length} payées`}>
-            <span style={{ width: `${(paye / duMois.length) * 100}%` }} />
-          </div>
+
+      <section className="xp-section">
+        <h2 className="xp-section-titre">Échéances de {nomPeriode(periode)} <small>{paye} / {duMois.length} payées</small></h2>
+        {tri.length === 0 ? <Vide titre="Aucune échéance ce mois-ci." texte="Les postes réguliers se règlent dans Paramètres." /> : (
+          <div className="xp-liste">{tri.map((e) => <Ligne key={e.id} e={e} {...commun} />)}</div>
         )}
-        {tri.length === 0 ? <Vide>Aucune échéance ce mois-ci. Les postes réguliers se règlent dans Réglages.</Vide> : (
-          <ul className="liste">{tri.map((e) => <Ligne key={e.id} e={e} {...commun} />)}</ul>
-        )}
-        <p className="texte-doux petit">Les échéances viennent des postes réguliers (loyer, CNSS, internet…). Une dépense enregistrée pour le bon mois les marque comme payées.</p>
+        <p className="g7-note">Les échéances viennent des postes réguliers. Une dépense enregistrée pour le bon mois les marque comme payées.</p>
       </section>
-    </div>
+    </>
   )
 }

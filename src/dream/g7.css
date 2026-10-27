@@ -1,0 +1,92 @@
+/* Compléments propres à Groupe7M, dans l'esprit The Dream (jetons de base.css et experience.css). */
+
+.marque-logo.g7 { background: var(--degrade-marque, linear-gradient(135deg, #F3D98B, #D4AF37 55%, #9C7A2B)); color: var(--sur-or, #0B0B0D); font-family: var(--police-titre); font-size: 12px; }
+
+/* Bandeau de démonstration */
+.g7-demo { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--bordure)); background: var(--accent-doux); color: var(--accent-2, var(--accent)); font-size: 13px; }
+
+/* Choix du mois */
+.g7-mois { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-douce); border: 1px solid var(--bordure); }
+.g7-mois strong { min-width: 128px; text-align: center; font-size: 13.5px; font-weight: 650; text-transform: capitalize; }
+.g7-mois .icone-bouton { width: 34px; height: 34px; }
+.g7-mois .icone-bouton.gauche svg { transform: rotate(180deg); }
+
+/* Menu du profil */
+.g7-profil-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; display: grid; gap: 2px; min-width: 240px; padding: 6px; border-radius: 14px; border: 1px solid var(--bordure-forte); background: var(--surface); box-shadow: var(--ombre-forte); }
+.g7-profil-menu button { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 12px; border: 0; border-radius: 9px; background: transparent; text-align: left; cursor: pointer; }
+.g7-profil-menu button:hover { background: var(--surface-survol); }
+
+/* Répartition en une barre */
+.g7-repartition { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--surface-douce); gap: 2px; }
+.g7-repartition span { display: block; min-width: 3px; }
+.g7-legende { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.g7-legende li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 44px; align-items: center; gap: 10px; font-size: 13.5px; }
+.g7-legende .puce { width: 10px; height: 10px; border-radius: 3px; }
+.g7-legende strong { font-variant-numeric: tabular-nums; }
+.g7-legende small { color: var(--texte-doux); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Icône ronde d'une ligne de liste */
+.g7-puce-icone { display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--accent-doux); color: var(--accent); }
+.g7-puce-icone.mauvais { background: var(--rouge-doux); color: var(--rouge); }
+.g7-puce-icone.vigilance { background: var(--orange-doux); color: var(--orange); }
+.g7-puce-icone.bon { background: var(--vert-doux); color: var(--vert); }
+.xp-ligne .g7-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 4px; }
+.xp-ligne-valeur small { display: block; font-weight: 500; font-size: 12px; color: var(--texte-doux); text-align: right; }
+
+/* Tuiles : bordure de couleur selon l'état */
+.xp-tuile.ton-mauvais { border-left: 3px solid var(--rouge); }
+.xp-tuile.ton-vigilance { border-left: 3px solid var(--orange); }
+.xp-tuile.ton-bon { border-left: 3px solid var(--vert); }
+.xp-tuile:disabled { opacity: 0.55; cursor: default; }
+.xp-tuile .g7-detail { font-size: 12.5px; color: var(--texte-doux); }
+.xp-tuile .g7-detail.mauvais { color: var(--rouge); }
+.xp-tuile .g7-detail.vigilance { color: var(--orange); }
+.xp-tuile .g7-detail.bon { color: var(--vert); }
+
+/* Progression des échéances */
+.g7-progression { height: 8px; border-radius: 999px; background: var(--surface-douce); overflow: hidden; }
+.g7-progression span { display: block; height: 100%; background: var(--degrade-marque); border-radius: inherit; transition: width 0.6s var(--mouvement, ease); }
+
+/* Champ montant */
+.g7-montant { display: flex; align-items: center; gap: 8px; border: 1px solid var(--bordure-champ); border-radius: 10px; background: var(--surface-douce); padding: 0 12px; }
+.g7-montant:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--anneau); }
+.g7-montant input { flex: 1; min-width: 0; border: 0; background: transparent; box-shadow: none; padding: 10px 0; font-variant-numeric: tabular-nums; outline: none; }
+.g7-montant span { color: var(--texte-doux); font-size: 13px; font-weight: 600; }
+.g7-montant.grand input { font-size: 26px; font-weight: 700; font-family: var(--police-titre); color: var(--accent-2, var(--texte)); }
+
+.g7-document { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.g7-document .bouton { cursor: pointer; }
+
+/* Choix d'un poste dans « Nouvelle dépense » */
+.g7-choix-groupe { display: grid; gap: 8px; }
+.g7-choix-groupe > span { font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.g7-choix { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.g7-choix button { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border: 1px solid var(--bordure); border-radius: 12px; background: var(--surface-douce); text-align: left; cursor: pointer; font-weight: 550; transition: border-color 0.15s, background 0.15s; }
+.g7-choix button:hover { border-color: var(--accent); background: var(--accent-doux); }
+.g7-choix button .g7-puce-icone { width: 28px; height: 28px; border-radius: 8px; }
+
+.g7-deux { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 520px) { .g7-deux { grid-template-columns: minmax(0, 1fr); } }
+.g7-calcul { display: grid; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--accent-doux); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--bordure)); font-size: 13.5px; }
+.g7-calcul small { color: var(--texte-doux); }
+.g7-alertes { margin: 0; padding: 12px 14px 12px 32px; border-radius: 12px; background: var(--rouge-doux); color: var(--rouge); font-size: 13.5px; display: grid; gap: 4px; }
+.g7-case { display: flex; align-items: center; gap: 10px; }
+.g7-case input { width: 18px; height: 18px; accent-color: var(--accent); }
+fieldset.g7-champs { display: grid; gap: 14px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.modale-corps > p { margin: 0; }
+.modale header h2 { font-family: var(--police-titre); font-size: 18px; }
+
+.texte-doux { color: var(--texte-doux); }
+.texte-erreur { color: var(--rouge); margin: 0; }
+.texte-ok { color: var(--vert); margin: 0; }
+.petit { font-size: 12.5px; }
+.g7-note { margin: 0; font-size: 12.5px; color: var(--texte-faible); max-width: 90ch; }
+.g7-filtre { width: auto; min-width: 200px; }
+
+/* Petit écran : le bouton « + » de la barre du haut reste visible, le texte se cache. */
+@media (max-width: 640px) {
+  .barre-haut-outils .bouton.principal span { display: none; }
+  .g7-mois strong { min-width: 104px; }
+}
+.g7-form { max-width: 420px; }
+.g7-boutons { display: flex; gap: 8px; flex-wrap: wrap; }

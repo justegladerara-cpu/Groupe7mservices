@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { api, traduireErreur } from '../lib/api.js'
 import { GROUPES, dateIso, decalerPeriode, nomPeriode, periodeDe } from '../lib/regles.js'
-import { Champ, ChampDocument, ChampMontant, Fenetre } from '../ui/kit.jsx'
+import { Champ, ChampDocument, ChampMontant, Erreur, Icone, Modale, iconePoste } from '../ui/kit.jsx'
 
 export const MODES = {
   especes: 'Espèces',
@@ -59,65 +59,65 @@ export default function NouvelleDepense({ postes, pre, fermer, enregistre }) {
   if (!poste) {
     const parGroupe = Object.keys(GROUPES).map((g) => [g, postes.filter((p) => p.groupe === g)]).filter(([, l]) => l.length)
     return (
-      <Fenetre titre="Nouvelle dépense · quel poste ?" fermer={fermer}>
+      <Modale titre="Nouvelle dépense : quel poste ?" fermer={fermer} large>
         {parGroupe.map(([g, liste]) => (
-          <div key={g} className="groupe-choix">
-            <div className="groupe-choix-titre">{GROUPES[g].nom}</div>
-            <div className="grille-choix">
+          <div key={g} className="g7-choix-groupe">
+            <span>{GROUPES[g].nom}</span>
+            <div className="g7-choix">
               {liste.map((p) => (
                 <button key={p.id} className="choix-poste" onClick={() => choisir(p)}>
-                  <span aria-hidden>{p.icone}</span>{p.nom}
+                  <span className="g7-puce-icone"><Icone nom={iconePoste(p)} taille={15} /></span>{p.nom}
                 </button>
               ))}
             </div>
           </div>
         ))}
-      </Fenetre>
+      </Modale>
     )
   }
 
   return (
-    <Fenetre
-      titre={`${poste.icone} ${poste.nom}`}
+    <Modale
+      titre={poste.nom}
       fermer={fermer}
       pied={
         <>
-          <button className="bouton bouton-secondaire" onClick={() => setPoste(null)} disabled={envoi}>Changer de poste</button>
-          <button className="bouton" onClick={enregistrer} disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
+          <button className="bouton" onClick={() => setPoste(null)} disabled={envoi}>Changer de poste</button>
+          <button className="bouton principal" onClick={enregistrer} disabled={envoi}>{envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
         </>
       }
     >
       {poste.aide && <p className="texte-doux">{poste.aide}</p>}
-      <Champ label="Montant payé">
+      <Champ libelle="Montant payé">
         <ChampMontant valeur={montant} onChange={setMontant} autoFocus grand />
       </Champ>
-      <Champ label="Reçu ou facture" aide="Photo prise avec le téléphone ou fichier PDF. Il reste attaché à la dépense comme preuve.">
+      <Champ libelle="Reçu ou facture" aide="Photo prise avec le téléphone ou fichier PDF. Il reste attaché à la dépense comme preuve.">
         <ChampDocument fichier={fichier} setFichier={setFichier} />
       </Champ>
-      <div className="deux-colonnes">
-        <Champ label="Payé le">
+      <div className="g7-deux">
+        <Champ libelle="Payé le">
           <input type="date" value={date} max={aujourdhui} onChange={(e) => setDate(e.target.value)} />
         </Champ>
-        <Champ label="Pour quel mois ?" aide={poste.decalage_mois ? 'Ex. : la CNSS payée en novembre concerne octobre.' : null}>
+        <Champ libelle="Pour quel mois ?" aide={poste.decalage_mois ? 'Ex. : la CNSS payée en novembre concerne octobre.' : null}>
           <select value={periode} onChange={(e) => setPeriode(e.target.value)}>
             {choixPeriodes.map((p) => <option key={p} value={p}>{nomPeriode(p)}</option>)}
           </select>
         </Champ>
       </div>
-      <div className="deux-colonnes">
-        <Champ label="Payé comment ?">
+      <div className="g7-deux">
+        <Champ libelle="Payé comment ?">
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
             {Object.entries(MODES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </Champ>
-        <Champ label="Payé à">
+        <Champ libelle="Payé à">
           <input value={beneficiaire} onChange={(e) => setBeneficiaire(e.target.value)} placeholder="Ex. : E2C, propriétaire…" />
         </Champ>
       </div>
-      <Champ label="Note (facultatif)">
+      <Champ libelle="Note (facultatif)">
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ex. : facture n° 1234" />
       </Champ>
-      {erreur && <p className="texte-erreur">{erreur}</p>}
-    </Fenetre>
+      <Erreur message={erreur} />
+    </Modale>
   )
 }
