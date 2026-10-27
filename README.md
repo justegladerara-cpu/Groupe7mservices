@@ -34,6 +34,7 @@ Sans fichier `.env`, l'application s'ouvre en **démonstration** avec des chiffr
    ```sql
    insert into public.g7_membres (email, nom, role) values ('email-du-gerant@exemple.com', 'Nom du gérant', 'gerant');
    ```
+   Un compte peut aussi avoir un **identifiant** au lieu d'un e-mail : l'identifiant `PatronG7` correspond à l'adresse `patrong7@groupe7m.local` (à créer confirmée). On se connecte en tapant seulement l'identifiant ; le mot de passe se change dans Réglages › Mon compte.
    Rôles : `gerant` (tout), `saisie` (ajoute et modifie, ne supprime pas), `lecteur` (lecture seule).
 4. **Authentication › URL Configuration** : mettre l'adresse du site dans *Site URL* (pour « Mot de passe oublié »).
 

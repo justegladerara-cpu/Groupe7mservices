@@ -133,3 +133,12 @@ describe('début du suivi CNSS', () => {
     expect(debutSuiviCnss([], new Date('2026-10-27T10:00:00'))).toBe('2026-09-01')
   })
 })
+
+import { emailDeConnexion, identifiantAffiche } from '../src/lib/regles.js'
+describe('identifiants', () => {
+  it('transforme un identifiant en adresse de connexion', () => {
+    expect(emailDeConnexion(' PatronG7 ')).toBe('patrong7@groupe7m.local')
+    expect(emailDeConnexion('Moi@Exemple.com')).toBe('moi@exemple.com')
+    expect(identifiantAffiche('patrong7@groupe7m.local')).toBe('patrong7')
+  })
+})
