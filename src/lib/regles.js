@@ -234,3 +234,13 @@ export function debutSuiviCnss(declarations, aujourdhui = new Date()) {
   const periodes = (declarations || []).map((d) => d.periode).filter(Boolean).sort()
   return periodes[0] || decalerPeriode(periodeDe(aujourdhui), -1)
 }
+
+// Un identifiant sans « @ » (ex. PatronG7) correspond au compte <identifiant>@groupe7m.local.
+export const DOMAINE_IDENTIFIANTS = 'groupe7m.local'
+export function emailDeConnexion(saisie) {
+  const v = String(saisie || '').trim().toLowerCase()
+  return v.includes('@') ? v : `${v}@${DOMAINE_IDENTIFIANTS}`
+}
+export function identifiantAffiche(email) {
+  return email.endsWith(`@${DOMAINE_IDENTIFIANTS}`) ? email.split('@')[0] : email
+}

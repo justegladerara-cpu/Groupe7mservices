@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { traduireErreur } from '../lib/api.js'
+import { DOMAINE_IDENTIFIANTS, emailDeConnexion } from '../lib/regles.js'
 
 export default function Connexion({ recuperation, finRecuperation }) {
   const [email, setEmail] = useState('')
@@ -24,14 +25,18 @@ export default function Connexion({ recuperation, finRecuperation }) {
   const seConnecter = (e) => {
     e.preventDefault()
     agir(async () => {
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: motDePasse })
+      const { error } = await supabase.auth.signInWithPassword({ email: emailDeConnexion(email), password: motDePasse })
       if (error) throw error
     })
   }
 
   const oublie = () => agir(async () => {
-    if (!email.trim()) throw new Error("Écrivez d'abord votre e-mail.")
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin })
+    if (!email.trim()) throw new Error("Écrivez d'abord votre identifiant ou votre e-mail.")
+    const adresse = emailDeConnexion(email)
+    if (adresse.endsWith(`@${DOMAINE_IDENTIFIANTS}`)) {
+      throw new Error('Pour un identifiant, contactez Agence Elite qui remettra un mot de passe provisoire.')
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(adresse, { redirectTo: window.location.origin + window.location.pathname })
     if (error) throw error
     setMessage('Un e-mail vous a été envoyé pour choisir un nouveau mot de passe.')
   })
@@ -64,8 +69,8 @@ export default function Connexion({ recuperation, finRecuperation }) {
         ) : (
           <>
             <label className="champ">
-              <span className="champ-label">E-mail</span>
-              <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
+              <span className="champ-label">Identifiant</span>
+              <input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
             </label>
             <label className="champ">
               <span className="champ-label">Mot de passe</span>

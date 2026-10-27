@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api, modeDemo, traduireErreur } from '../lib/api.js'
-import { GROUPES, MOIS, formatFcfa } from '../lib/regles.js'
+import { GROUPES, MOIS, formatFcfa, identifiantAffiche } from '../lib/regles.js'
+import { supabase } from '../lib/supabase.js'
 import { Champ, ChampMontant, Fenetre } from '../ui/kit.jsx'
 
 const PERIODICITES = {
@@ -48,7 +49,8 @@ export default function Reglages({ donnees, estGerant, recharger, email, membre 
 
       <section className="carte">
         <h2>Mon compte</h2>
-        <p>{membre.nom} · {email} · {membre.role === 'gerant' ? 'Gérant (tous les droits)' : membre.role === 'saisie' ? 'Saisie des dépenses' : 'Lecture seule'}</p>
+        <p>Identifiant : <b>{identifiantAffiche(email) === email ? email : membre.nom}</b> · {membre.role === 'gerant' ? 'Gérant (tous les droits)' : membre.role === 'saisie' ? 'Saisie des dépenses' : 'Lecture seule'}</p>
+        {!modeDemo && <ChangerMotDePasse />}
         {!modeDemo && <p className="texte-doux petit">Pour ajouter une personne (comptable, secrétaire), demandez à Agence Elite : elle sera ajoutée avec le bon niveau d'accès.</p>}
       </section>
 
@@ -133,5 +135,49 @@ function FichePoste({ p, fermer, enregistre }) {
       </label>
       {erreur && <p className="texte-erreur">{erreur}</p>}
     </Fenetre>
+  )
+}
+
+function ChangerMotDePasse() {
+  const [ouvert, setOuvert] = useState(false)
+  const [nouveau, setNouveau] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [etat, setEtat] = useState({ envoi: false, erreur: '', ok: '' })
+
+  async function enregistrer(e) {
+    e.preventDefault()
+    if (nouveau.length < 8) return setEtat({ envoi: false, erreur: 'Au moins 8 caractères.', ok: '' })
+    if (nouveau !== confirmation) return setEtat({ envoi: false, erreur: 'Les deux mots de passe ne sont pas identiques.', ok: '' })
+    setEtat({ envoi: true, erreur: '', ok: '' })
+    const { error } = await supabase.auth.updateUser({ password: nouveau })
+    if (error) return setEtat({ envoi: false, erreur: traduireErreur(error), ok: '' })
+    setNouveau('')
+    setConfirmation('')
+    setEtat({ envoi: false, erreur: '', ok: 'Mot de passe changé. Utilisez-le à la prochaine connexion.' })
+    setOuvert(false)
+  }
+
+  if (!ouvert) {
+    return (
+      <>
+        <button className="bouton bouton-secondaire" onClick={() => setOuvert(true)}>Changer mon mot de passe</button>
+        {etat.ok && <p className="texte-vert">{etat.ok}</p>}
+      </>
+    )
+  }
+  return (
+    <form className="pile-serree" onSubmit={enregistrer}>
+      <Champ label="Nouveau mot de passe">
+        <input type="password" autoComplete="new-password" value={nouveau} onChange={(e) => setNouveau(e.target.value)} autoFocus />
+      </Champ>
+      <Champ label="Le retaper">
+        <input type="password" autoComplete="new-password" value={confirmation} onChange={(e) => setConfirmation(e.target.value)} />
+      </Champ>
+      {etat.erreur && <p className="texte-erreur">{etat.erreur}</p>}
+      <div className="rangee">
+        <button type="button" className="bouton bouton-secondaire" onClick={() => setOuvert(false)} disabled={etat.envoi}>Annuler</button>
+        <button className="bouton" disabled={etat.envoi}>{etat.envoi ? 'Enregistrement…' : 'Enregistrer'}</button>
+      </div>
+    </form>
   )
 }
