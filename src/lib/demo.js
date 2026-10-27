@@ -1,0 +1,161 @@
+// Données FICTIVES pour la démonstration (aucune donnée réelle de Groupe7M).
+import { aEcheance, dateIso, dateLimite, decalerPeriode, periodeDe } from './regles.js'
+
+let n = 0
+const id = () => `demo-${++n}`
+const aujourdhui = new Date()
+const ceMois = periodeDe(aujourdhui)
+
+const postes = [
+  ['Salaires des agents', 'agents', '👷', 'mensuelle', null, 30, 0, 1800000],
+  ['Avances sur salaire', 'agents', '💵', 'ponctuelle', null, 1, 0, null],
+  ['CNSS', 'etat', '🛡️', 'mensuelle', null, 20, 1, 440000],
+  ['TUS', 'etat', '🏛️', 'mensuelle', null, 20, 1, 135000],
+  ['IRPP retenu', 'etat', '🧾', 'mensuelle', null, 20, 1, 88000],
+  ['TOL', 'etat', '🏘️', 'mensuelle', null, 20, 1, 10000],
+  ['Patente et autres impôts', 'etat', '📜', 'ponctuelle', null, 1, 0, null],
+  ['Loyer', 'bureau', '🏢', 'mensuelle', null, 5, 0, 250000],
+  ['Électricité', 'bureau', '💡', 'mensuelle', null, 15, 0, 60000],
+  ['Eau', 'bureau', '🚰', 'mensuelle', null, 15, 0, 15000],
+  ['Internet', 'bureau', '🌐', 'mensuelle', null, 5, 0, 35000],
+  ['Téléphone et crédit', 'bureau', '📱', 'ponctuelle', null, 1, 0, null],
+  ['Fournitures de bureau', 'bureau', '📎', 'ponctuelle', null, 1, 0, null],
+  ['Assurances', 'protection', '☂️', 'annuelle', 1, 15, 0, 400000],
+  ['Transport et carburant', 'terrain', '⛽', 'ponctuelle', null, 1, 0, null],
+  ['Équipements de sécurité', 'terrain', '🦺', 'ponctuelle', null, 1, 0, null],
+  ['Frais bancaires', 'autre', '🏦', 'ponctuelle', null, 1, 0, null],
+  ['Autres dépenses', 'autre', '📦', 'ponctuelle', null, 1, 0, null],
+].map(([nom, groupe, icone, periodicite, mois_reference, jour_echeance, decalage_mois, montant_habituel], i) => ({
+  id: id(), nom, groupe, icone, periodicite, mois_reference, jour_echeance, decalage_mois,
+  montant_habituel, beneficiaire: null, aide: null, ordre: (i + 1) * 10, actif: true,
+}))
+const P = Object.fromEntries(postes.map((p) => [p.nom, p.id]))
+
+const echeances = []
+const depenses = []
+
+function preparer(periode) {
+  let k = 0
+  for (const p of postes) {
+    if (!aEcheance(p, periode) || echeances.some((e) => e.poste_id === p.id && e.periode === periode)) continue
+    echeances.push({
+      id: id(), poste_id: p.id, periode, ignoree: false, note: null,
+      date_limite: dateLimite(periode, p.jour_echeance, p.decalage_mois), montant_prevu: p.montant_habituel,
+    })
+    k++
+  }
+  return k
+}
+
+function jourDe(periode, j) {
+  const [a, m] = periode.split('-').map(Number)
+  const d = new Date(a, m - 1, j)
+  return dateIso(d > aujourdhui ? aujourdhui : d)
+}
+
+// Trois mois d'historique fictif.
+for (let i = 4; i >= 0; i--) {
+  const p = decalerPeriode(ceMois, -i)
+  preparer(p)
+  const avant = decalerPeriode(p, -1)
+  const ajout = (poste, montant, periode, jour, extra = {}) => depenses.push({
+    id: id(), poste_id: P[poste], periode, date_paiement: jourDe(p, jour), montant,
+    mode_paiement: 'especes', beneficiaire: null, reference: null, note: null, recu_path: null,
+    cree_par: 'demo', cree_le: new Date().toISOString(), ...extra,
+  })
+  ajout('Loyer', 250000, p, 4)
+  ajout('Internet', 35000, p, 6, { mode_paiement: 'mobile_money' })
+  ajout('Électricité', i === 0 ? 92000 : 58000 + i * 3000, p, 14)
+  ajout('Transport et carburant', 45000 + i * 8000, p, 9)
+  if (i > 0) {
+    ajout('Salaires des agents', 1800000, p, 28, { mode_paiement: 'virement' })
+    ajout('CNSS', 440000, avant, 18, { mode_paiement: 'virement' })
+    ajout('TUS', 135000, avant, 19, { mode_paiement: 'virement' })
+    ajout('IRPP retenu', 88000, avant, 19, { mode_paiement: 'virement' })
+    ajout('TOL', 10000, avant, 19)
+    ajout('Eau', 15000, p, 13)
+  }
+  if (i === 0) {
+    ajout('TUS', 135000, avant, 18, { mode_paiement: 'virement' })
+    ajout('IRPP retenu', 88000, avant, 18, { mode_paiement: 'virement' })
+    ajout('TOL', 10000, avant, 18)
+  }
+  if (i === 2) ajout('Équipements de sécurité', 120000, p, 12)
+  if (i === 1) ajout('Avances sur salaire', 150000, p, 15)
+  if (i === 0) ajout('Avances sur salaire', 200000, p, 3)
+}
+
+const cnss = [2, 3, 4, 5].map((i) => {
+  const p = decalerPeriode(ceMois, -i)
+  return {
+    periode: p, assures: 9, non_immatricules: i === 2 ? 1 : 0, brut: 1810000, montant_declare: 439468,
+    date_declaration: dateLimite(p, 15, 1), periode_accuse: p, accuse_path: null, note: null,
+  }
+})
+
+const autorisations = [
+  ['Agrément de mise à disposition de personnel', 'Ministère du Travail', 'AGR-0000', -400, 45],
+  ['RCCM', 'Tribunal de commerce', 'CG-PNR-00-B00', -1500, null],
+  ['NIU', 'Impôts', 'M00000000000', -1500, null],
+  ['Patente', 'Impôts', null, -300, 65],
+  ['Attestation de mise à jour CNSS', 'CNSS', null, -100, -10],
+  ['Attestation de non-redevance fiscale', 'Impôts', null, null, null],
+  ['Assurance responsabilité civile', 'Assureur', null, -200, 165],
+  ['Bail du bureau', 'Propriétaire', null, -700, 395],
+].map(([nom, organisme, numero, debut, fin], i) => {
+  const d = (x) => (x === null ? null : dateIso(new Date(aujourdhui.getTime() + x * 86400000)))
+  return { id: id(), nom, organisme, numero, date_debut: d(debut), date_fin: d(fin), rappel_jours: 60, document_path: null, note: null, ordre: (i + 1) * 10 }
+})
+
+const pause = (v) => new Promise((ok) => setTimeout(() => ok(structuredClone(v)), 120))
+const err = () => { throw new Error('Démonstration : les documents ne sont pas enregistrés.') }
+
+export const monRole = async () => pause({ nom: 'Démonstration', role: 'gerant' })
+export const listerPostes = async () => pause([...postes].sort((a, b) => a.ordre - b.ordre))
+export async function enregistrerPoste(poste) {
+  if (poste.id) Object.assign(postes.find((p) => p.id === poste.id), poste)
+  else postes.push({ ...poste, id: id() })
+  return pause(poste)
+}
+export const preparerMois = async (periode) => pause(periode <= ceMois ? preparer(periode) : 0)
+export const listerDepenses = async (depuis, jusqua) => {
+  const fin = decalerPeriode(jusqua, 1)
+  return pause(depenses.filter((d) => d.date_paiement >= depuis && d.date_paiement < fin)
+    .sort((a, b) => b.date_paiement.localeCompare(a.date_paiement)))
+}
+export const depensesDesPeriodes = async (depuis, jusqua) =>
+  pause(depenses.filter((d) => d.periode >= depuis && d.periode <= jusqua))
+export async function ajouterDepense(d) {
+  const ligne = { id: id(), cree_par: 'demo', cree_le: new Date().toISOString(), ...d }
+  depenses.push(ligne)
+  return pause(ligne)
+}
+export async function supprimerDepense(i) {
+  depenses.splice(depenses.findIndex((d) => d.id === i), 1)
+  return pause(null)
+}
+export const listerEcheances = async (depuis, jusqua) =>
+  pause(echeances.filter((e) => e.periode >= depuis && e.periode <= jusqua).sort((a, b) => a.date_limite.localeCompare(b.date_limite)))
+export async function modifierEcheance(i, champs) {
+  Object.assign(echeances.find((e) => e.id === i), champs)
+  return pause(null)
+}
+export const listerCnss = async () => pause([...cnss].sort((a, b) => b.periode.localeCompare(a.periode)))
+export async function enregistrerCnss(ligne) {
+  const i = cnss.findIndex((c) => c.periode === ligne.periode)
+  if (i >= 0) cnss[i] = { ...cnss[i], ...ligne }
+  else cnss.push(ligne)
+  return pause(ligne)
+}
+export const listerAutorisations = async () => pause([...autorisations].sort((a, b) => a.ordre - b.ordre))
+export async function enregistrerAutorisation(a) {
+  if (a.id) Object.assign(autorisations.find((x) => x.id === a.id), a)
+  else autorisations.push({ ...a, id: id(), ordre: 999 })
+  return pause(a)
+}
+export async function supprimerAutorisation(i) {
+  autorisations.splice(autorisations.findIndex((a) => a.id === i), 1)
+  return pause(null)
+}
+export const envoyerDocument = async () => err()
+export const ouvrirDocument = async () => err()
