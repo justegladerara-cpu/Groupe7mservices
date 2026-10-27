@@ -19,13 +19,13 @@ as $$
 $$;
 
 create or replace function public.g7_est_membre()
-returns boolean language sql stable as $$ select public.g7_role() is not null $$;
+returns boolean language sql stable set search_path = public as $$ select public.g7_role() is not null $$;
 
 create or replace function public.g7_peut_ecrire()
-returns boolean language sql stable as $$ select public.g7_role() in ('gerant', 'saisie') $$;
+returns boolean language sql stable set search_path = public as $$ select public.g7_role() in ('gerant', 'saisie') $$;
 
 create or replace function public.g7_est_gerant()
-returns boolean language sql stable as $$ select public.g7_role() = 'gerant' $$;
+returns boolean language sql stable set search_path = public as $$ select public.g7_role() = 'gerant' $$;
 
 -- ---------- Postes de dépense ----------
 create table if not exists public.g7_postes (
