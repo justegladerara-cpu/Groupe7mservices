@@ -1,24 +1,23 @@
 name: Mettre en ligne
 
+# Construit le site et le publie dans la branche gh-pages (servie par GitHub Pages).
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  construire:
+  publier:
     runs-on: ubuntu-24.04
     env:
-      # Adresse et clé PUBLIQUE du projet Supabase (protégé par les règles RLS de la base).
+      # Adresse et clé PUBLIQUE du projet Supabase (les données sont protégées par les règles RLS).
       VITE_SUPABASE_URL: https://ytwyvufkfrmghreqrctv.supabase.co
       VITE_SUPABASE_ANON_KEY: sb_publishable_OpHPdBIr-_ieHzKSJvup9A_cLHq5_XJ
     steps:
@@ -30,16 +29,13 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  publier:
-    needs: construire
-    runs-on: ubuntu-24.04
-    environment:
-      name: github-pages
-      url: ${{ steps.deploiement.outputs.page_url }}
-    steps:
-      - id: deploiement
-        uses: actions/deploy-pages@v4
+      - name: Publier dans gh-pages
+        run: |
+          cd dist
+          touch .nojekyll
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "Site du ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" gh-pages
