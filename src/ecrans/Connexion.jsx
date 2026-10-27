@@ -55,9 +55,8 @@ export default function Connexion({ recuperation, finRecuperation }) {
   return (
     <CadreAuth>
       <form className="connexion-carte" onSubmit={recuperation ? nouveau : seConnecter}>
-        <div className="marque">
-          <span className="marque-logo g7">G7M</span>
-          <span className="marque-texte"><strong>Groupe7M services</strong><small>Tableau de bord</small></span>
+        <div className="marque g7-marque">
+          <span className="g7-plaque grande"><img src={`${import.meta.env.BASE_URL}logo-g7.png`} alt="Groupe7M Services" /></span>
         </div>
         <div>
           <h1>{recuperation ? 'Nouveau mot de passe' : 'Bienvenue'}</h1>

@@ -4,7 +4,7 @@ import { Icone } from './Icone.jsx';
 // Briques communes de la nouvelle version : tuiles qui répondent aux 4 questions (combien, est-ce bien, pourquoi,
 // que faire), photo des serveurs, anneau d'objectif, petite courbe, modification sur place.
 
-const COULEURS_INITIALES = ['#D4AF37', '#2FBF71', '#F2A93B', '#8AA4FF', '#E5484D', '#C9A0FF', '#4FD1C5'];
+const COULEURS_INITIALES = ['#FF5A0F', '#2FBF71', '#F5B23B', '#8AA4FF', '#E5484D', '#C9A0FF', '#4FD1C5'];
 
 // « 1 ticket », « 3 tickets » : jamais de « ticket(s) ».
 export function pluriel(n, singulier, plurielForme = `${singulier}s`) {
@@ -150,9 +150,9 @@ export function Anneau({ part, taille = 132, epaisseur = 10, children, libelle }
       <svg width={taille} height={taille} viewBox={`0 0 ${taille} ${taille}`}>
         <defs>
           <linearGradient id={`or-${id}`} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#F3D98B" />
-            <stop offset="55%" stopColor="#D4AF37" />
-            <stop offset="100%" stopColor="#9C7A2B" />
+            <stop offset="0%" stopColor="#FF8A4C" />
+            <stop offset="55%" stopColor="#FE4F00" />
+            <stop offset="100%" stopColor="#D94000" />
           </linearGradient>
         </defs>
         <circle cx={taille / 2} cy={taille / 2} r={r} fill="none" stroke="var(--bordure)" strokeWidth={epaisseur} />

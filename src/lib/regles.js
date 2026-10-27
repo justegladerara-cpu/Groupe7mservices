@@ -189,7 +189,7 @@ export function controlesCnss(declaration, periode) {
 // ---------- Synthèse ----------
 
 export const GROUPES = {
-  agents: { nom: 'Les agents', couleur: '#D4AF37' },
+  agents: { nom: 'Les agents', couleur: '#FF5A0F' },
   etat: { nom: "L'État", couleur: '#F2A93B' },
   bureau: { nom: 'Le bureau', couleur: '#2FBF71' },
   terrain: { nom: 'Le terrain', couleur: '#8AA4FF' },

@@ -162,8 +162,8 @@ export const ouvrirDocument = async () => err()
 
 // ---------- Clients, factures, paie (fictifs) ----------
 const clients = [
-  { id: 'demo-client-1', nom: 'Pétrole Démo SA', delai_paiement: 45, actif: true, note: null },
-  { id: 'demo-client-2', nom: 'Chantier Naval Démo', delai_paiement: 30, actif: true, note: null },
+  { id: 'demo-client-1', nom: 'Pétrole Démo SA', delai_paiement: 45, actif: true, note: null, contact: 'Service achats', contrat_debut: dateIso(new Date(aujourdhui.getFullYear() - 1, 0, 1)), contrat_fin: dateIso(new Date(aujourdhui.getFullYear(), aujourdhui.getMonth() + 2, 0)), coefficient: 1.2 },
+  { id: 'demo-client-2', nom: 'Chantier Naval Démo', delai_paiement: 30, actif: true, note: null, contact: null, contrat_debut: null, contrat_fin: null, coefficient: 1.2 },
 ]
 const factures = []
 const paie = []
@@ -214,4 +214,27 @@ export async function enregistrerPaie(ligne) {
   if (i >= 0) paie[i] = { ...paie[i], ...ligne }
   else paie.push(ligne)
   return pause(ligne)
+}
+
+// ---------- Agents (fictifs) ----------
+const dansJours = (n) => dateIso(new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate() + n))
+const agents = [
+  ['Agent A', 'Électricien', 'demo-client-1', 'Base Démo (onshore)', 'cdd', -300, 200, 650000, 'jour', 37000, '100001'],
+  ['Agent B', 'Manœuvre', 'demo-client-1', 'Base Démo (onshore)', 'cdd', -200, 18, 300000, 'jour', 20000, '100002'],
+  ['Agent C', 'Chauffeur', 'demo-client-1', 'Base Démo (onshore)', 'journalier', -60, null, 330000, 'jour', 19800, null],
+  ['Agent D', 'Electrical senior', 'demo-client-1', 'Plateforme Démo (offshore)', 'cdi', -900, null, 1300000, 'heure', 7536, '100004'],
+  ['Agent E', 'Soudeur', 'demo-client-2', 'Chantier Démo', 'cdd', -120, -3, 520000, 'jour', 30000, '100005'],
+].map(([nom, qualification, client_id, site, type_contrat, debut, fin, salaire_base, unite_facture, prix_facture, matricule_cnss]) => ({
+  id: id(), nom, qualification, client_id, site, statut: 'actif', type_contrat, debut: dansJours(debut), fin: fin === null ? null : dansJours(fin),
+  salaire_base, unite_facture, prix_facture, matricule_cnss, telephone: null, note: null,
+}))
+export const listerAgents = async () => pause([...agents].sort((a, b) => a.nom.localeCompare(b.nom)))
+export async function enregistrerAgent(a) {
+  if (a.id) Object.assign(agents.find((x) => x.id === a.id), a)
+  else agents.push({ ...a, id: id() })
+  return pause(a)
+}
+export async function supprimerAgent(i) {
+  agents.splice(agents.findIndex((x) => x.id === i), 1)
+  return pause(null)
 }

@@ -122,6 +122,25 @@ async function enregistrerPaie(ligne) {
   return verifier(await supabase.from('g7_paie_mois').upsert({ ...ligne, modifie_le: new Date().toISOString() }).select().single())
 }
 
+// ---------- Agents placés ----------
+
+// Si la table n'est pas encore créée dans la base, l'écran Agents l'explique au lieu de tout bloquer.
+async function listerAgents() {
+  const { data, error } = await supabase.from('g7_agents').select('*').order('nom')
+  if (error && /g7_agents|42P01|PGRST205/i.test(`${error.code} ${error.message}`)) return null
+  return verifier({ data, error })
+}
+
+async function enregistrerAgent(a) {
+  const { id, cree_le, ...champs } = a
+  if (id) return verifier(await supabase.from('g7_agents').update(champs).eq('id', id).select().single())
+  return verifier(await supabase.from('g7_agents').insert(champs).select().single())
+}
+
+async function supprimerAgent(id) {
+  return verifier(await supabase.from('g7_agents').delete().eq('id', id))
+}
+
 // ---------- Documents ----------
 
 // Réduit une photo avant envoi (internet lent) : 1600 px max, JPEG qualité 0,72.
@@ -162,6 +181,7 @@ const reel = {
   ajouterDepense, supprimerDepense, listerEcheances, modifierEcheance, listerCnss, enregistrerCnss,
   listerAutorisations, enregistrerAutorisation, supprimerAutorisation, envoyerDocument, ouvrirDocument,
   listerClients, enregistrerClient, listerFactures, enregistrerFacture, supprimerFacture, listerPaie, enregistrerPaie,
+  listerAgents, enregistrerAgent, supprimerAgent,
 }
 
 // Sans base configurée, l'application tourne en démonstration avec des données fictives.

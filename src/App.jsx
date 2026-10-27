@@ -14,6 +14,10 @@ import Reglages from './ecrans/Reglages.jsx'
 import Factures from './ecrans/Factures.jsx'
 import Marge from './ecrans/Marge.jsx'
 import NouvelleDepense from './ecrans/NouvelleDepense.jsx'
+import Agents from './ecrans/Agents.jsx'
+import Clients from './ecrans/Clients.jsx'
+import Tresorerie from './ecrans/Tresorerie.jsx'
+import Rapport from './ecrans/Rapport.jsx'
 
 // Même structure que The Dream : menu par groupes à gauche, barre du haut, onglets en bas sur téléphone.
 const GROUPES_MENU = [
@@ -22,16 +26,20 @@ const GROUPES_MENU = [
     ecrans: [
       { id: 'accueil', nom: 'Tableau de bord', icone: 'tableau', court: 'Tableau' },
       { id: 'marge', nom: 'Marge du mois', icone: 'graphique', court: 'Marge' },
+      { id: 'tresorerie', nom: 'Trésorerie prévue', icone: 'billet', court: 'Trésorerie' },
+      { id: 'rapport', nom: 'Rapport du mois', icone: 'imprimer', court: 'Rapport' },
     ],
   },
   {
     titre: 'Argent',
     ecrans: [
+      { id: 'clients', nom: 'Clients', icone: 'clients' },
       { id: 'factures', nom: 'Factures clients', icone: 'facture', court: 'Factures' },
       { id: 'depenses', nom: 'Dépenses', icone: 'depenses' },
       { id: 'echeances', nom: 'À payer', icone: 'echeance' },
     ],
   },
+  { titre: 'Personnel', ecrans: [{ id: 'agents', nom: 'Agents placés', icone: 'membres', court: 'Agents' }] },
   {
     titre: 'Obligations',
     ecrans: [
@@ -104,7 +112,7 @@ function Tableau({ email }) {
       setErreur('')
       if (periode <= ceMois) await api.preparerMois(periode)
       const debut = decalerPeriode(periode, -12)
-      const [postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie] = await Promise.all([
+      const [postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie, agents] = await Promise.all([
         api.listerPostes(),
         api.listerDepenses(decalerPeriode(periode, -1), periode),
         api.listerEcheances(debut, periode),
@@ -114,8 +122,9 @@ function Tableau({ email }) {
         api.listerClients(),
         api.listerFactures(),
         api.listerPaie(),
+        api.listerAgents(),
       ])
-      setDonnees({ postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie })
+      setDonnees({ postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie, agents })
     } catch (e) {
       setErreur(traduireErreur(e))
     }
@@ -215,6 +224,10 @@ function Tableau({ email }) {
                 {onglet === 'accueil' && <Accueil {...commun} voirPoste={(id) => { setFiltrePoste(id); aller('depenses') }} />}
                 {onglet === 'factures' && <Factures {...commun} />}
                 {onglet === 'marge' && <Marge {...commun} />}
+                {onglet === 'tresorerie' && <Tresorerie {...commun} />}
+                {onglet === 'rapport' && <Rapport {...commun} />}
+                {onglet === 'clients' && <Clients {...commun} />}
+                {onglet === 'agents' && <Agents {...commun} />}
                 {onglet === 'depenses' && <Depenses {...commun} filtrePoste={filtrePoste} setFiltrePoste={setFiltrePoste} />}
                 {onglet === 'echeances' && <Echeances {...commun} />}
                 {onglet === 'cnss' && <Cnss {...commun} />}
@@ -256,12 +269,8 @@ function Tableau({ email }) {
 
 function Marque() {
   return (
-    <div className="marque">
-      <span className="marque-logo g7">G7M</span>
-      <span className="marque-texte">
-        <strong>Groupe7M services</strong>
-        <small>Où va l'argent</small>
-      </span>
+    <div className="marque g7-marque">
+      <span className="g7-plaque"><img src={`${import.meta.env.BASE_URL}logo-g7.png`} alt="Groupe7M Services" /></span>
     </div>
   )
 }
