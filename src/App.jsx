@@ -11,14 +11,23 @@ import Echeances from './ecrans/Echeances.jsx'
 import Cnss from './ecrans/Cnss.jsx'
 import Papiers from './ecrans/Papiers.jsx'
 import Reglages from './ecrans/Reglages.jsx'
+import Factures from './ecrans/Factures.jsx'
+import Marge from './ecrans/Marge.jsx'
 import NouvelleDepense from './ecrans/NouvelleDepense.jsx'
 
 // Même structure que The Dream : menu par groupes à gauche, barre du haut, onglets en bas sur téléphone.
 const GROUPES_MENU = [
-  { titre: 'Pilotage', ecrans: [{ id: 'accueil', nom: 'Tableau de bord', icone: 'tableau' }] },
+  {
+    titre: 'Pilotage',
+    ecrans: [
+      { id: 'accueil', nom: 'Tableau de bord', icone: 'tableau', court: 'Tableau' },
+      { id: 'marge', nom: 'Marge du mois', icone: 'graphique', court: 'Marge' },
+    ],
+  },
   {
     titre: 'Argent',
     ecrans: [
+      { id: 'factures', nom: 'Factures clients', icone: 'facture', court: 'Factures' },
       { id: 'depenses', nom: 'Dépenses', icone: 'depenses' },
       { id: 'echeances', nom: 'À payer', icone: 'echeance' },
     ],
@@ -33,7 +42,7 @@ const GROUPES_MENU = [
   { titre: 'Organisation', ecrans: [{ id: 'reglages', nom: 'Paramètres', icone: 'parametres' }] },
 ]
 const ECRANS = GROUPES_MENU.flatMap((g) => g.ecrans)
-const ONGLETS_MOBILE = ['accueil', 'depenses', 'echeances', 'cnss']
+const ONGLETS_MOBILE = ['accueil', 'factures', 'depenses', 'echeances']
 
 function lireOnglet() {
   const h = window.location.hash.replace('#/', '').split('?')[0]
@@ -95,15 +104,18 @@ function Tableau({ email }) {
       setErreur('')
       if (periode <= ceMois) await api.preparerMois(periode)
       const debut = decalerPeriode(periode, -12)
-      const [postes, depenses, echeances, depensesPeriodes, cnss, autorisations] = await Promise.all([
+      const [postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie] = await Promise.all([
         api.listerPostes(),
         api.listerDepenses(decalerPeriode(periode, -1), periode),
         api.listerEcheances(debut, periode),
         api.depensesDesPeriodes(debut, ceMois > periode ? ceMois : periode),
         api.listerCnss(),
         api.listerAutorisations(),
+        api.listerClients(),
+        api.listerFactures(),
+        api.listerPaie(),
       ])
-      setDonnees({ postes, depenses, echeances, depensesPeriodes, cnss, autorisations })
+      setDonnees({ postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie })
     } catch (e) {
       setErreur(traduireErreur(e))
     }
@@ -140,7 +152,7 @@ function Tableau({ email }) {
       <button className="icone-bouton" aria-label="Mois suivant" disabled={periode >= ceMois} onClick={() => setPeriode(decalerPeriode(periode, 1))}><Icone nom="chevron" /></button>
     </div>
   )
-  const commun = { vue, donnees, periode, peutEcrire, estGerant, recharger: charger, ouvrirSaisie, aller, choixMois, membre }
+  const commun = { vue, donnees, periode, setPeriode, peutEcrire, estGerant, recharger: charger, ouvrirSaisie, aller, choixMois, membre }
   const ecran = ECRANS.find((e) => e.id === onglet)
 
   return (
@@ -201,6 +213,8 @@ function Tableau({ email }) {
             {!vue ? <Chargement texte="Chargement des chiffres…" /> : (
               <>
                 {onglet === 'accueil' && <Accueil {...commun} voirPoste={(id) => { setFiltrePoste(id); aller('depenses') }} />}
+                {onglet === 'factures' && <Factures {...commun} />}
+                {onglet === 'marge' && <Marge {...commun} />}
                 {onglet === 'depenses' && <Depenses {...commun} filtrePoste={filtrePoste} setFiltrePoste={setFiltrePoste} />}
                 {onglet === 'echeances' && <Echeances {...commun} />}
                 {onglet === 'cnss' && <Cnss {...commun} />}

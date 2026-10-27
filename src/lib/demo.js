@@ -159,3 +159,59 @@ export async function supprimerAutorisation(i) {
 }
 export const envoyerDocument = async () => err()
 export const ouvrirDocument = async () => err()
+
+// ---------- Clients, factures, paie (fictifs) ----------
+const clients = [
+  { id: 'demo-client-1', nom: 'Pétrole Démo SA', delai_paiement: 45, actif: true, note: null },
+  { id: 'demo-client-2', nom: 'Chantier Naval Démo', delai_paiement: 30, actif: true, note: null },
+]
+const factures = []
+const paie = []
+let numero = 40
+for (let i = 5; i >= 1; i--) {
+  const p = decalerPeriode(ceMois, -i)
+  const emise = jourDe(decalerPeriode(p, 1), 12)
+  const ajoutF = (client_id, type, lignes, paye) => {
+    const montant = lignes.reduce((s, l) => s + l.quantite * l.prix, 0)
+    factures.push({
+      id: id(), numero: `${String(++numero).padStart(3, '0')}/${p.slice(5, 7)}/${p.slice(0, 4)}`, client_id, periode: p,
+      date_facture: emise, type, site: type === 'maintenance' ? 'Plateforme Démo (offshore)' : 'Base Démo (onshore)', lignes,
+      montant, montant_paye: paye ? montant : 0, date_paiement: paye ? jourDe(decalerPeriode(p, 2), 20) : null, document_path: null, note: null,
+    })
+  }
+  ajoutF('demo-client-1', 'journalier', [
+    { agent: 'Agent A', qualification: 'Électricien', unite: 'jour', quantite: 22, prix: 37000 },
+    { agent: 'Agent B', qualification: 'Manœuvre', unite: 'jour', quantite: 24, prix: 20000 },
+    { agent: 'Agent C', qualification: 'Chauffeur', unite: 'jour', quantite: 20, prix: 19800 },
+  ], i >= 3)
+  ajoutF('demo-client-1', 'maintenance', [
+    { agent: 'Agent D', qualification: 'Electrical senior', unite: 'heure', quantite: 210, prix: 7536 },
+  ], i >= 3)
+  if (i % 2) ajoutF('demo-client-2', 'journalier', [{ agent: 'Agent E', qualification: 'Soudeur', unite: 'jour', quantite: 18, prix: 30000 }], i >= 2)
+  paie.push({ periode: p, effectif: 5, brut: 1650000, indemnites: 220000, charges: 450000, agents: i === 1 ? 'Agent A\nAgent B\nAgent D\nAgent E' : 'Agent A\nAgent B\nAgent C\nAgent D\nAgent E', note: null })
+}
+
+export const listerClients = async () => pause(clients)
+export async function enregistrerClient(c) {
+  if (c.id) Object.assign(clients.find((x) => x.id === c.id), c)
+  else clients.push({ ...c, id: id() })
+  return pause(c)
+}
+export const listerFactures = async () => pause([...factures].sort((a, b) => b.date_facture.localeCompare(a.date_facture) || b.numero.localeCompare(a.numero)))
+export async function enregistrerFacture(f) {
+  if (factures.some((x) => x.id !== f.id && x.numero === f.numero)) throw new Error('Ce numéro de facture existe déjà.')
+  if (f.id) Object.assign(factures.find((x) => x.id === f.id), f)
+  else factures.push({ ...f, id: id() })
+  return pause(f)
+}
+export async function supprimerFacture(i) {
+  factures.splice(factures.findIndex((f) => f.id === i), 1)
+  return pause(null)
+}
+export const listerPaie = async () => pause([...paie].sort((a, b) => b.periode.localeCompare(a.periode)))
+export async function enregistrerPaie(ligne) {
+  const i = paie.findIndex((x) => x.periode === ligne.periode)
+  if (i >= 0) paie[i] = { ...paie[i], ...ligne }
+  else paie.push(ligne)
+  return pause(ligne)
+}

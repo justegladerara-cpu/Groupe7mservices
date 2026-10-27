@@ -5,6 +5,7 @@ import {
 } from '../lib/regles.js'
 import { Anneau, Barre, EnteteXp, Tuile, Verdict, pluriel } from '../dream/communs.jsx'
 import { iconePoste } from '../ui/kit.jsx'
+import { encours, etatFacture, margeMois } from '../lib/facturation.js'
 
 // Mois CNSS à surveiller : les 6 derniers mois terminés.
 export function alertesCnss(donnees, aujourdhui = new Date()) {
@@ -69,6 +70,19 @@ export default function Accueil({ vue, donnees, periode, aller, voirPoste, ouvri
       cle: a.id, ton: 'vigilance', icone: 'dossier', titre: a.nom, texte: phraseAutorisation(a), action: () => aller('papiers'), conseil: 'Préparer le renouvellement',
     })),
   ]
+
+  // Côté recettes : ce que les clients doivent, et la marge du dernier mois dont la paie est saisie.
+  const clientsParId = Object.fromEntries(donnees.clients.map((c) => [c.id, c]))
+  const du = encours(donnees.factures, donnees.clients)
+  const facturesRetard = donnees.factures.filter((f) => etatFacture(f, clientsParId[f.client_id]) === 'en_retard')
+  const dernierePaie = donnees.paie.find((x) => donnees.factures.some((f) => f.periode === x.periode))
+  const marge = dernierePaie ? margeMois({ periode: dernierePaie.periode, factures: donnees.factures, paie: dernierePaie, depenses: donnees.depensesPeriodes, postes: donnees.postes }) : null
+  if (facturesRetard.length) {
+    aFaire.unshift({
+      cle: 'factures-retard', ton: 'mauvais', icone: 'facture', titre: `${facturesRetard.length > 1 ? `${facturesRetard.length} factures clients` : 'Une facture client'} en retard`,
+      valeur: formatFcfa(du.retard), texte: 'Le client a dépassé le délai de paiement : le relancer.', action: () => aller('factures'), conseil: 'Voir les factures',
+    })
+  }
 
   const verdictTotal = v === null
     ? { ton: 'neutre', texte: `${pluriel(vue.nombreDepenses, 'dépense enregistrée', 'dépenses enregistrées')}` }
@@ -138,6 +152,16 @@ export default function Accueil({ vue, donnees, periode, aller, voirPoste, ouvri
       <section className="xp-section">
         <h2 className="xp-section-titre">Les chiffres</h2>
         <div className="xp-grille">
+          <Tuile titre="Les clients doivent" icone="billet" valeur={formatFcfa(du.du)}
+            verdict={du.retard ? { ton: 'mauvais', texte: 'Retard' } : du.du ? { ton: 'neutre', texte: 'Dans les délais' } : { ton: 'bon', texte: 'Tout encaissé' }}
+            pourquoi={du.retard ? `Dont ${formatFcfa(du.retard)} en retard.` : 'Factures envoyées pas encore payées.'}
+            conseil="Voir les factures" onClick={() => aller('factures')} />
+          {marge && (
+            <Tuile titre={`Marge de ${nomPeriodeCourt(marge.periode)}`} icone="graphique" valeur={formatFcfa(marge.apresPaie)}
+              verdict={{ ton: marge.taux >= 30 ? 'bon' : marge.taux >= 15 ? 'vigilance' : 'mauvais', texte: `${marge.taux} %` }}
+              pourquoi={`Facturé ${formatFcfa(marge.facture)}, paie ${formatFcfa(marge.coutPaie)}.`}
+              conseil="Voir la marge" onClick={() => aller('marge')} />
+          )}
           <Tuile titre="Reste à payer ce mois" icone="echeance" valeur={formatFcfa(vue.resteAPayer)}
             verdict={vue.resteAPayer === 0 ? { ton: 'bon', texte: 'Réglé' } : null}
             pourquoi={vue.sansMontant > 0

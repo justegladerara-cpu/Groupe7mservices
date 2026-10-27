@@ -10,6 +10,7 @@ function verifier({ data, error }) {
 export function traduireErreur(error) {
   const m = error?.message || String(error)
   if (/Invalid login credentials/i.test(m)) return 'E-mail ou mot de passe incorrect.'
+  if (/duplicate key.*numero|g7_factures_numero_key/i.test(m)) return 'Ce numéro de facture existe déjà.'
   if (/row-level security|permission denied|Accès réservé/i.test(m)) return "Votre compte n'a pas le droit de faire cette action."
   if (/Failed to fetch|NetworkError|network/i.test(m)) return 'Pas de connexion internet. Réessayez dans un instant.'
   return m
@@ -87,6 +88,40 @@ async function supprimerAutorisation(id) {
   return verifier(await supabase.from('g7_autorisations').delete().eq('id', id))
 }
 
+// ---------- Clients, factures, paie du mois ----------
+
+async function listerClients() {
+  return verifier(await supabase.from('g7_clients').select('*').order('nom'))
+}
+
+async function enregistrerClient(c) {
+  const { id, cree_le, ...champs } = c
+  if (id) return verifier(await supabase.from('g7_clients').update(champs).eq('id', id).select().single())
+  return verifier(await supabase.from('g7_clients').insert(champs).select().single())
+}
+
+async function listerFactures() {
+  return verifier(await supabase.from('g7_factures').select('*').order('date_facture', { ascending: false }).order('numero', { ascending: false }))
+}
+
+async function enregistrerFacture(f) {
+  const { id, cree_le, ...champs } = f
+  if (id) return verifier(await supabase.from('g7_factures').update(champs).eq('id', id).select().single())
+  return verifier(await supabase.from('g7_factures').insert(champs).select().single())
+}
+
+async function supprimerFacture(id) {
+  return verifier(await supabase.from('g7_factures').delete().eq('id', id))
+}
+
+async function listerPaie() {
+  return verifier(await supabase.from('g7_paie_mois').select('*').order('periode', { ascending: false }))
+}
+
+async function enregistrerPaie(ligne) {
+  return verifier(await supabase.from('g7_paie_mois').upsert({ ...ligne, modifie_le: new Date().toISOString() }).select().single())
+}
+
 // ---------- Documents ----------
 
 // Réduit une photo avant envoi (internet lent) : 1600 px max, JPEG qualité 0,72.
@@ -126,6 +161,7 @@ const reel = {
   monRole, listerPostes, enregistrerPoste, preparerMois, listerDepenses, depensesDesPeriodes,
   ajouterDepense, supprimerDepense, listerEcheances, modifierEcheance, listerCnss, enregistrerCnss,
   listerAutorisations, enregistrerAutorisation, supprimerAutorisation, envoyerDocument, ouvrirDocument,
+  listerClients, enregistrerClient, listerFactures, enregistrerFacture, supprimerFacture, listerPaie, enregistrerPaie,
 }
 
 // Sans base configurée, l'application tourne en démonstration avec des données fictives.

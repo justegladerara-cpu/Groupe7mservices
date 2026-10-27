@@ -91,3 +91,19 @@ fieldset.g7-champs { display: grid; gap: 14px; margin: 0; padding: 0; border: 0;
 .g7-form { max-width: 420px; }
 .g7-boutons { display: flex; gap: 8px; flex-wrap: wrap; }
 .xp-aujourdhui-courbe, .xp-aujourdhui-courbe .xp-barres { width: 100%; }
+
+/* Lignes d'une facture */
+.g7-lignes { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--bordure); border-radius: 12px; background: var(--surface-douce); }
+.g7-lignes-tete, .g7-lignes-ligne { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr) 92px 80px 100px 104px 32px; gap: 6px; align-items: center; }
+.g7-lignes-tete span { font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--texte-faible); font-weight: 600; }
+.g7-lignes-ligne input, .g7-lignes-ligne select { min-height: 38px; padding: 6px 8px; font-size: 13.5px; }
+.g7-lignes-ligne strong { text-align: right; font-variant-numeric: tabular-nums; font-size: 13.5px; }
+.g7-lignes .lien { justify-self: start; margin-top: 4px; }
+@media (max-width: 760px) {
+  .g7-lignes-tete { display: none; }
+  .g7-lignes-ligne { grid-template-columns: 1fr 1fr; padding-bottom: 8px; border-bottom: 1px dashed var(--bordure); }
+  .g7-lignes-ligne strong { text-align: left; }
+  .g7-lignes-ligne .icone-bouton { justify-self: end; }
+}
+.xp-section-titre > span { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.g7-detail.petit { font-size: 12px; }
