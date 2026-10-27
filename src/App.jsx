@@ -112,7 +112,7 @@ function Tableau({ email }) {
       setErreur('')
       if (periode <= ceMois) await api.preparerMois(periode)
       const debut = decalerPeriode(periode, -12)
-      const [postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie, agents] = await Promise.all([
+      const [postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie, agents, bulletins] = await Promise.all([
         api.listerPostes(),
         api.listerDepenses(decalerPeriode(periode, -1), periode),
         api.listerEcheances(debut, periode),
@@ -123,8 +123,9 @@ function Tableau({ email }) {
         api.listerFactures(),
         api.listerPaie(),
         api.listerAgents(),
+        api.listerBulletins(),
       ])
-      setDonnees({ postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie, agents })
+      setDonnees({ postes, depenses, echeances, depensesPeriodes, cnss, autorisations, clients, factures, paie, agents, bulletins })
     } catch (e) {
       setErreur(traduireErreur(e))
     }

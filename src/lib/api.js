@@ -137,6 +137,13 @@ async function enregistrerAgent(a) {
   return verifier(await supabase.from('g7_agents').insert(champs).select().single())
 }
 
+// Bulletins de paie et factures de prestataires, rangés par agent et par mois.
+async function listerBulletins() {
+  const { data, error } = await supabase.from('g7_bulletins').select('*').order('periode', { ascending: false })
+  if (error && /g7_bulletins|42P01|PGRST205/i.test(`${error.code} ${error.message}`)) return []
+  return verifier({ data, error })
+}
+
 async function supprimerAgent(id) {
   return verifier(await supabase.from('g7_agents').delete().eq('id', id))
 }
@@ -181,7 +188,7 @@ const reel = {
   ajouterDepense, supprimerDepense, listerEcheances, modifierEcheance, listerCnss, enregistrerCnss,
   listerAutorisations, enregistrerAutorisation, supprimerAutorisation, envoyerDocument, ouvrirDocument,
   listerClients, enregistrerClient, listerFactures, enregistrerFacture, supprimerFacture, listerPaie, enregistrerPaie,
-  listerAgents, enregistrerAgent, supprimerAgent,
+  listerAgents, enregistrerAgent, supprimerAgent, listerBulletins,
 }
 
 // Sans base configurée, l'application tourne en démonstration avec des données fictives.

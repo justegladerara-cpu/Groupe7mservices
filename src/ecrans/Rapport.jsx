@@ -1,19 +1,19 @@
 import { formatDate, formatFcfa, GROUPES, nomPeriode, etatAutorisation, periodeDe } from '../lib/regles.js'
-import { agentsHorsPaie, encours, etatFacture, margeMois, resteFacture } from '../lib/facturation.js'
+import { agentsHorsPaie, prestatairesDu, encours, etatFacture, margeMois, resteFacture } from '../lib/facturation.js'
 import { resumeAgents } from '../lib/agents.js'
 import { EnteteXp, pluriel } from '../dream/communs.jsx'
 import { Icone } from '../ui/kit.jsx'
 
 // Inspiré du rapport de The Dream : une page à imprimer ou à envoyer en PDF au gérant, pour le mois choisi.
 export default function Rapport({ vue, donnees, periode, choixMois }) {
-  const { factures, clients, paie, postes, depensesPeriodes, autorisations, agents } = donnees
+  const { factures, clients, paie, postes, depensesPeriodes, autorisations, agents, bulletins = [] } = donnees
   const lignePaie = paie.find((x) => x.periode === periode) || null
-  const m = margeMois({ periode, factures, paie: lignePaie, depenses: depensesPeriodes, postes })
+  const m = margeMois({ periode, factures, paie: lignePaie, depenses: depensesPeriodes, postes, bulletins })
   const e = encours(factures, clients)
   const encaisse = factures.filter((f) => f.date_paiement && periodeDe(f.date_paiement) === periode).reduce((s, f) => s + Number(f.montant_paye || 0), 0)
-  const horsPaie = agentsHorsPaie(factures.filter((f) => f.periode === periode), lignePaie)
+  const horsPaie = agentsHorsPaie(factures.filter((f) => f.periode === periode), lignePaie, prestatairesDu(periode, bulletins, agents))
   const papiers = autorisations.filter((a) => ['expiree', 'bientot'].includes(etatAutorisation(a)))
-  const ra = agents ? resumeAgents(agents, clients) : null
+  const ra = agents ? resumeAgents(agents, clients, new Date(), bulletins, factures) : null
   const parClient = Object.fromEntries(clients.map((c) => [c.id, c]))
   const retards = factures.filter((f) => etatFacture(f, parClient[f.client_id]) === 'en_retard')
 
@@ -22,6 +22,7 @@ export default function Rapport({ vue, donnees, periode, choixMois }) {
     ...vue.enRetard.map((x) => `${x.poste?.nom} de ${nomPeriode(x.periode)} pas payé (limite ${formatDate(x.date_limite)}).`),
     ...(horsPaie.length ? [`${horsPaie.join(', ')} facturé(s) mais absent(s) de la paie : risque CNSS.`] : []),
     ...papiers.map((a) => `${a.nom} : ${etatAutorisation(a) === 'expiree' ? 'expiré' : 'expire bientôt'}${a.date_fin ? ` (${formatDate(a.date_fin)})` : ''}.`),
+    ...(ra?.pertes ? [`${pluriel(ra.pertes, 'agent facturé', 'agents facturés')} sous son coût réel.`] : []),
     ...(ra?.sousConvention ? [`${pluriel(ra.sousConvention, 'agent facturé', 'agents facturés')} sous le prix de la convention.`] : []),
     ...(ra?.finProche ? [`${pluriel(ra.finProche, 'contrat d’agent', 'contrats d’agents')} à renouveler sous 30 jours.`] : []),
   ]
@@ -48,7 +49,7 @@ export default function Rapport({ vue, donnees, periode, choixMois }) {
         <table className="g7-rapport-table">
           <tbody>
             <tr><td>Facturé aux clients (travail de {nomPeriode(periode)})</td><td>{formatFcfa(m.facture)}</td></tr>
-            <tr><td>Coût de la paie (salaires, primes, CNSS et TUS)</td><td>{m.coutPaie === null ? 'pas saisi' : formatFcfa(m.coutPaie)}</td></tr>
+            <tr><td>Coût de la paie (salaires, primes, CNSS et TUS{m.prestataires ? ', prestataires' : ''})</td><td>{m.coutPaie === null ? 'pas saisi' : formatFcfa(m.coutPaie)}</td></tr>
             <tr className="fort"><td>Reste après la paie</td><td>{m.apresPaie === null ? '—' : `${formatFcfa(m.apresPaie)} (${m.taux} %)`}</td></tr>
             <tr><td>Frais du bureau et autres dépenses</td><td>{formatFcfa(m.frais)}</td></tr>
             <tr className="fort"><td>Résultat du mois</td><td>{m.resultat === null ? '—' : formatFcfa(m.resultat)}</td></tr>

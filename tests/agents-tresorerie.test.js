@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { alertesAgent, coutUnitaire, margeAgent, prixPlancher, resumeAgents } from '../src/lib/agents.js'
+import { alertesAgent, coutUnitaire, historiqueAgent, margeAgent, prixPlancher, resumeAgents } from '../src/lib/agents.js'
 import { prevision } from '../src/lib/tresorerie.js'
 
 const auj = new Date('2026-10-27T10:00:00')
@@ -58,5 +58,35 @@ describe('trésorerie prévue', () => {
     const r = prevision({ solde: 0, scenario: 'prudent', semaines: 4, factures, clients, postes, paie, aujourdhui: auj })
     expect(r.lignes[0].entrees).toBe(0)
     expect(r.premiereNegative).toBe('2026-10-26')
+  })
+})
+
+describe('coût réel à partir des bulletins (données fictives)', () => {
+  const agent = { id: 'a', nom: 'DUPONT Paul Henri', statut: 'actif', unite_facture: 'jour', prix_facture: 20000, client_id: 'c', matricule_cnss: '1' }
+  const bulletins = [
+    { agent_id: 'a', periode: '2026-07-01', unite: 'jour', nombre: 20, cout: 400000 },
+    { agent_id: 'a', periode: '2026-08-01', unite: 'jour', nombre: 20, cout: 500000, note: 'Charges patronales du bulletin à vérifier' },
+  ]
+  const factures = [{ periode: '2026-08-01', lignes: [{ agent: 'DUPONT Henri', quantite: 20, prix: 20000 }, { agent: 'DUPONT Henri', quantite: 10, prix: 3000 }] }]
+
+  it('prend le coût du dernier bulletin', () => {
+    expect(coutUnitaire(agent, bulletins)).toBe(25000)
+  })
+
+  it('signale un agent facturé sous son coût', () => {
+    const a = alertesAgent(agent, { coefficient: 1.2 }, auj, bulletins).map((x) => x.cle)
+    expect(a).toEqual(['perte', 'bulletin'])
+  })
+
+  it('compare le facturé et le coût mois par mois', () => {
+    const h = historiqueAgent(agent, bulletins, factures)
+    expect(h[0]).toMatchObject({ periode: '2026-08-01', cout: 500000, facture: 430000, marge: -70000 })
+    expect(h[1]).toMatchObject({ periode: '2026-07-01', facture: 0, marge: null })
+  })
+
+  it('un prestataire est signalé comme non déclaré, pas comme sans matricule', () => {
+    const a = alertesAgent({ ...agent, statut_emploi: 'prestataire', matricule_cnss: null, prix_facture: 50000 }, null, auj, bulletins).map((x) => x.cle)
+    expect(a).toContain('prestataire')
+    expect(a).not.toContain('cnss')
   })
 })

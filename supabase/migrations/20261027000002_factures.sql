@@ -63,6 +63,4 @@ end $$;
 revoke all on public.g7_clients, public.g7_factures, public.g7_paie_mois from anon;
 grant select, insert, update, delete on public.g7_clients, public.g7_factures, public.g7_paie_mois to authenticated;
 
-insert into public.g7_clients (nom, delai_paiement)
-values ('Gruppo Antonini Energy', 45)
-on conflict (nom) do nothing;
+-- Les clients réels sont saisis dans l'application (rien de confidentiel dans le dépôt public).

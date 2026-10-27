@@ -76,7 +76,7 @@ export default function Accueil({ vue, donnees, periode, aller, voirPoste, ouvri
   const du = encours(donnees.factures, donnees.clients)
   const facturesRetard = donnees.factures.filter((f) => etatFacture(f, clientsParId[f.client_id]) === 'en_retard')
   const dernierePaie = donnees.paie.find((x) => donnees.factures.some((f) => f.periode === x.periode))
-  const marge = dernierePaie ? margeMois({ periode: dernierePaie.periode, factures: donnees.factures, paie: dernierePaie, depenses: donnees.depensesPeriodes, postes: donnees.postes }) : null
+  const marge = dernierePaie ? margeMois({ periode: dernierePaie.periode, factures: donnees.factures, paie: dernierePaie, depenses: donnees.depensesPeriodes, postes: donnees.postes, bulletins: donnees.bulletins }) : null
   if (facturesRetard.length) {
     aFaire.unshift({
       cle: 'factures-retard', ton: 'mauvais', icone: 'facture', titre: `${facturesRetard.length > 1 ? `${facturesRetard.length} factures clients` : 'Une facture client'} en retard`,

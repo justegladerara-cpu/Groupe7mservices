@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { api, traduireErreur } from '../lib/api.js'
-import { formatDate, formatFcfa, joursAvant } from '../lib/regles.js'
-import { TYPES_CONTRAT, UNITES_FACTURE, alertesAgent, coutUnitaire, margeAgent, prixPlancher, resumeAgents } from '../lib/agents.js'
+import { formatDate, formatFcfa, joursAvant, nomPeriode } from '../lib/regles.js'
+import { STATUTS_EMPLOI, TYPES_CONTRAT, UNITES_FACTURE, alertesAgent, coutEstReel, coutUnitaire, historiqueAgent, margeAgent, prixPlancher, resumeAgents } from '../lib/agents.js'
 import { EnteteXp, Segments, Tuile, pluriel } from '../dream/communs.jsx'
 import { Avatar, Champ, ChampMontant, Erreur, Icone, Modale, Vide } from '../ui/kit.jsx'
 
@@ -21,46 +21,79 @@ export default function Agents({ donnees, peutEcrire, estGerant, recharger }) {
     )
   }
 
+  const { bulletins = [], factures } = donnees
   const parClient = Object.fromEntries(clients.map((c) => [c.id, c]))
-  const r = resumeAgents(agents, clients)
+  const r = resumeAgents(agents, clients, new Date(), bulletins, factures)
   const lignes = r.avecAlertes
     .concat(agents.filter((a) => a.statut === 'sorti').map((agent) => ({ agent, alertes: [] })))
-  const visibles = lignes.filter(({ agent, alertes }) => (
-    filtre === 'alertes' ? alertes.length > 0
-      : filtre === 'actifs' ? agent.statut !== 'sorti'
-        : filtre === 'sortis' ? agent.statut === 'sorti'
-          : true
+    .sort((x, y) => graviteDe(y.alertes) - graviteDe(x.alertes) || x.agent.nom.localeCompare(y.agent.nom))
+  const filtrer = (f) => lignes.filter(({ agent, alertes }) => (
+    f === 'alertes' ? alertes.some((al) => al.ton === 'mauvais')
+      : f === 'salaries' ? agent.statut !== 'sorti' && agent.statut_emploi !== 'prestataire'
+        : f === 'prestataires' ? agent.statut !== 'sorti' && agent.statut_emploi === 'prestataire'
+          : f === 'sortis' ? agent.statut === 'sorti'
+            : agent.statut !== 'sorti'
   ))
-  const filtreEffectif = filtre === 'alertes' && visibles.length === 0 && agents.length ? 'actifs' : filtre
-  const liste = filtreEffectif === filtre ? visibles : lignes.filter(({ agent }) => agent.statut !== 'sorti')
+  const filtreEffectif = filtre === 'alertes' && filtrer('alertes').length === 0 ? 'actifs' : filtre
+  const liste = filtrer(filtreEffectif)
+  const mois = r.duMois.filter((x) => x.facture && x.cout)
+  const gagne = mois.reduce((s, x) => s + x.marge, 0)
+  const nomMois = r.dernierMois ? nomPeriode(r.dernierMois) : ''
 
   return (
     <>
-      <EnteteXp surtitre="Personnel" titre="Agents placés" sousTitre="Chaque agent, le client où il travaille, son contrat, ce qu’il coûte et ce qu’il rapporte.">
+      <EnteteXp surtitre="Personnel" titre="Agents placés" sousTitre="Chaque agent : chez quel client, ce qu’il coûte vraiment (bulletins de paie), ce qui est facturé pour lui, et ce qu’il rapporte.">
         {peutEcrire && <button className="bouton principal" onClick={() => setOuvert({})}><Icone nom="plus" taille={16} />Nouvel agent</button>}
       </EnteteXp>
 
       <div className="xp-grille">
         <Tuile titre="Agents en poste" icone="membres" valeur={String(r.actifs)}
-          pourquoi={clients.filter((c) => agents.some((a) => a.client_id === c.id && a.statut !== 'sorti')).map((c) => `${c.nom} : ${agents.filter((a) => a.client_id === c.id && a.statut !== 'sorti').length}`).join(' · ') || 'Aucun agent enregistré.'}
+          pourquoi={`${pluriel(r.actifs - r.prestataires, 'salarié')} et ${pluriel(r.prestataires, 'prestataire')} payé${r.prestataires > 1 ? 's' : ''} sur facture.`}
           conseil={agents.length ? 'Voir tous les agents' : null} onClick={() => setFiltre('actifs')} />
-        <Tuile titre="Rapportent par mois" icone="graphique" valeur={formatFcfa(r.margeMensuelle)}
-          verdict={r.margeMensuelle > 0 ? { ton: 'bon', texte: 'Estimation' } : null}
-          pourquoi="Prix facturé moins coût de l’agent (salaire + CNSS + TUS), pour un mois complet de 26 jours." />
-        <Tuile className={r.sousConvention ? 'xp-reco mauvais' : ''} titre="Facturés sous la convention" icone="alerte" valeur={String(r.sousConvention)}
-          verdict={r.sousConvention ? { ton: 'mauvais', texte: 'Argent perdu' } : { ton: 'bon', texte: 'Aucun' }}
-          pourquoi={r.sousConvention ? 'Le prix facturé est plus bas que le coût × le coefficient prévu avec le client. À renégocier.' : 'Tous les prix couvrent le coût et la marge prévue.'}
-          conseil={r.sousConvention ? 'Voir les alertes' : null} onClick={() => setFiltre('alertes')} />
-        <Tuile className={r.finProche ? 'xp-reco vigilance' : ''} titre="Contrats à renouveler" icone="calendrier" valeur={String(r.finProche)}
-          verdict={r.finProche ? { ton: 'vigilance', texte: 'Sous 30 jours' } : { ton: 'bon', texte: 'Aucun' }}
-          pourquoi={r.sansCnss ? `${pluriel(r.sansCnss, 'agent')} sans matricule CNSS.` : 'Tous les agents ont un matricule CNSS.'} />
+        {mois.length > 0 && (
+          <Tuile titre={`Rapporté en ${nomMois}`} icone="graphique" valeur={formatFcfa(gagne)}
+            verdict={{ ton: gagne > 0 ? 'bon' : 'mauvais', texte: `${pluriel(mois.length, 'agent')} comparé${mois.length > 1 ? 's' : ''}` }}
+            pourquoi={`Facturé pour ces agents moins ce qu’ils ont coûté (bulletins de ${nomMois}).`} />
+        )}
+        <Tuile className={r.pertes ? 'xp-reco mauvais' : ''} titre="Coûtent plus qu’ils ne rapportent" icone="alerte" valeur={String(r.pertes)}
+          verdict={r.pertes ? { ton: 'mauvais', texte: 'À renégocier' } : { ton: 'bon', texte: 'Aucun' }}
+          pourquoi={r.pertes ? 'Le prix facturé au client est plus bas que le coût réel du dernier bulletin (salaire, primes, indemnités et charges).' : 'Chaque prix facturé couvre le coût réel de l’agent.'}
+          conseil={r.pertes ? 'Voir ces agents' : null} onClick={() => setFiltre('alertes')} />
+        <Tuile className={r.prestataires ? 'xp-reco vigilance' : ''} titre="Payés sans bulletin" icone="badge" valeur={String(r.prestataires)}
+          verdict={r.prestataires ? { ton: 'vigilance', texte: 'Pas déclarés CNSS' } : { ton: 'bon', texte: 'Aucun' }}
+          pourquoi={r.prestataires ? 'Ils travaillent chez le client comme les autres mais sont payés sur facture de prestation (10 % retenus). Un contrôle peut les requalifier en salariés.' : 'Tous les agents ont un bulletin de paie.'}
+          conseil={r.prestataires ? 'Voir les prestataires' : null} onClick={() => setFiltre('prestataires')} />
       </div>
+
+      {mois.length > 0 && (
+        <section className="xp-section">
+          <h2 className="xp-section-titre"><span>Agent par agent en {nomMois} <small>facturé, coûté, gardé</small></span></h2>
+          <div className="xp-liste">
+            {[...mois].sort((x, y) => x.taux - y.taux).map((x) => (
+              <button key={x.agent.id} className="xp-ligne cliquable" onClick={() => setOuvert(x.agent)}>
+                <span className={`g7-puce-icone ${x.taux < 0 ? 'mauvais' : x.taux < 15 ? 'vigilance' : 'bon'}`}><Icone nom="graphique" taille={16} /></span>
+                <span className="xp-ligne-texte">
+                  <strong>{x.agent.nom}</strong>
+                  <small>Facturé {formatFcfa(x.facture)} · coûté {formatFcfa(x.cout)}{x.unites.length ? ` · ${x.unites.join(', ')}` : ''}</small>
+                </span>
+                <span className="xp-ligne-valeur">
+                  <span className={x.marge < 0 ? 'texte-erreur' : ''}>{x.marge > 0 ? '+' : ''}{formatFcfa(x.marge)}</span>
+                  <small>{x.taux} % gardé</small>
+                </span>
+              </button>
+            ))}
+          </div>
+          {r.duMois.length > mois.length && (
+            <p className="g7-note">Pas comparés : {r.duMois.filter((x) => !(x.facture && x.cout)).map((x) => `${x.agent.nom} (${x.cout ? 'payé, rien de facturé à son nom' : 'facturé, pas de bulletin rangé'})`).join(' · ')}.</p>
+          )}
+        </section>
+      )}
 
       <section className="xp-section">
         <h2 className="xp-section-titre">
           <span>Les agents <small>{pluriel(liste.length, 'agent')}</small></span>
           <Segments libelle="Filtrer" valeur={filtreEffectif} onChange={setFiltre}
-            options={[['alertes', 'À regarder'], ['actifs', 'En poste'], ['sortis', 'Sortis'], ['tous', 'Tous']]} />
+            options={[['alertes', 'Pertes'], ['actifs', 'En poste'], ['salaries', 'Salariés'], ['prestataires', 'Prestataires'], ['sortis', 'Sortis']]} />
         </h2>
         {liste.length === 0 ? (
           <Vide titre={agents.length ? 'Aucun agent ici.' : 'Aucun agent enregistré.'}
@@ -69,7 +102,7 @@ export default function Agents({ donnees, peutEcrire, estGerant, recharger }) {
         ) : (
           <div className="xp-liste">
             {liste.map(({ agent: a, alertes }) => {
-              const m = margeAgent(a)
+              const m = margeAgent(a, bulletins)
               return (
                 <button key={a.id} className="xp-ligne cliquable" onClick={() => setOuvert(a)}>
                   <Avatar nom={a.nom} />
@@ -77,7 +110,7 @@ export default function Agents({ donnees, peutEcrire, estGerant, recharger }) {
                     <strong>{a.nom}{a.qualification ? ` · ${a.qualification}` : ''}</strong>
                     <small>
                       {a.statut === 'sorti' ? 'Sorti' : parClient[a.client_id]?.nom || 'Pas placé'}{a.site ? ` · ${a.site}` : ''}
-                      {' · '}{TYPES_CONTRAT[a.type_contrat]}{a.fin ? ` jusqu’au ${formatDate(a.fin)}` : ''}
+                      {' · '}{a.statut_emploi === 'prestataire' ? 'Prestataire' : TYPES_CONTRAT[a.type_contrat]}{a.fin ? ` jusqu’au ${formatDate(a.fin)}` : ''}
                     </small>
                     {alertes.length > 0 && (
                       <span className="g7-actions">
@@ -87,40 +120,45 @@ export default function Agents({ donnees, peutEcrire, estGerant, recharger }) {
                   </span>
                   <span className="xp-ligne-valeur">
                     {a.prix_facture ? `${formatFcfa(a.prix_facture)}` : '—'}
-                    <small>{a.prix_facture ? UNITES_FACTURE[a.unite_facture] : ''}{m ? ` · ${m.taux} % gardé` : ''}</small>
+                    <small>{a.prix_facture ? UNITES_FACTURE[a.unite_facture] : ''}{m ? ` · coûte ${formatFcfa(m.cout)}` : ''}</small>
                   </span>
                 </button>
               )
             })}
           </div>
         )}
-        <p className="g7-note">Coût d’un agent = salaire de base + CNSS employeur (20,28 %) + TUS (7,5 %), sur 26 jours par mois (8 heures par jour). Prix minimum = coût × le coefficient du client (1,2 dans la convention).</p>
+        <p className="g7-note">Coût réel = salaire brut + primes + indemnités (transport, salissure, panier) + charges de l’employeur (CNSS 20,28 % et TUS 7,5 %), divisé par les jours ou les heures payés sur le dernier bulletin. Pour un prestataire : le total de sa facture. Sans bulletin, le coût est estimé à partir du salaire de base.</p>
       </section>
 
       {ouvert && (
-        <FicheAgent a={ouvert} clients={clients} peutEcrire={peutEcrire} estGerant={estGerant}
+        <FicheAgent a={ouvert} clients={clients} bulletins={bulletins} factures={factures} peutEcrire={peutEcrire} estGerant={estGerant}
           fermer={() => setOuvert(null)} enregistre={() => { setOuvert(null); recharger() }} />
       )}
     </>
   )
 }
 
-function FicheAgent({ a, clients, peutEcrire, estGerant, fermer, enregistre }) {
+const graviteDe = (alertes) => alertes.reduce((s, al) => s + (al.ton === 'mauvais' ? 10 : 1), 0)
+
+function FicheAgent({ a, clients, bulletins, factures, peutEcrire, estGerant, fermer, enregistre }) {
   const [v, setV] = useState({
     nom: a.nom || '', qualification: a.qualification || '', client_id: a.client_id || clients[0]?.id || '', site: a.site || '',
     statut: a.statut || 'actif', type_contrat: a.type_contrat || 'cdd', debut: a.debut || '', fin: a.fin || '',
     salaire_base: a.salaire_base ?? '', unite_facture: a.unite_facture || 'jour', prix_facture: a.prix_facture ?? '',
     matricule_cnss: a.matricule_cnss || '', telephone: a.telephone || '', note: a.note || '',
+    statut_emploi: a.statut_emploi || 'salarie', categorie: a.categorie || '',
   })
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState('')
   const ch = (k) => (e) => setV({ ...v, [k]: e.target.value })
   const client = clients.find((c) => c.id === v.client_id)
-  const brouillon = { ...v, salaire_base: Number(v.salaire_base || 0), prix_facture: Number(v.prix_facture || 0) }
-  const cout = coutUnitaire(brouillon)
-  const plancher = prixPlancher(brouillon, client)
-  const m = margeAgent(brouillon)
-  const alertes = alertesAgent(brouillon, client)
+  const brouillon = { ...v, id: a.id, salaire_base: Number(v.salaire_base || 0), prix_facture: Number(v.prix_facture || 0) }
+  const cout = coutUnitaire(brouillon, bulletins)
+  const reel = coutEstReel(brouillon, bulletins)
+  const plancher = prixPlancher(brouillon, client, bulletins)
+  const m = margeAgent(brouillon, bulletins)
+  const alertes = alertesAgent(brouillon, client, new Date(), bulletins)
+  const historique = a.id ? historiqueAgent(a, bulletins, factures) : []
 
   async function enregistrer() {
     if (!v.nom.trim()) return setErreur('Indiquez le nom de l’agent.')
@@ -133,6 +171,7 @@ function FicheAgent({ a, clients, peutEcrire, estGerant, fermer, enregistre }) {
         salaire_base: v.salaire_base === '' ? null : Number(v.salaire_base), unite_facture: v.unite_facture,
         prix_facture: v.prix_facture === '' ? null : Number(v.prix_facture),
         matricule_cnss: v.matricule_cnss.trim() || null, telephone: v.telephone.trim() || null, note: v.note || null,
+        statut_emploi: v.statut_emploi, categorie: v.categorie.trim() || null,
       })
       enregistre()
     } catch (e) {
@@ -170,6 +209,14 @@ function FicheAgent({ a, clients, peutEcrire, estGerant, fermer, enregistre }) {
           <Champ libelle="Site"><input value={v.site} onChange={ch('site')} placeholder="Base, plateforme, chantier…" /></Champ>
         </div>
         <div className="g7-deux">
+          <Champ libelle="Payé comment">
+            <select value={v.statut_emploi} onChange={ch('statut_emploi')}>
+              {Object.entries(STATUTS_EMPLOI).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+          </Champ>
+          <Champ libelle="Catégorie"><input value={v.categorie} onChange={ch('categorie')} placeholder="7 échelon 2" /></Champ>
+        </div>
+        <div className="g7-deux">
           <Champ libelle="Contrat">
             <select value={v.type_contrat} onChange={ch('type_contrat')}>
               {Object.entries(TYPES_CONTRAT).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
@@ -190,7 +237,7 @@ function FicheAgent({ a, clients, peutEcrire, estGerant, fermer, enregistre }) {
           </Champ>
         </div>
         <div className="g7-deux">
-          <Champ libelle="Salaire de base par mois" aide={cout ? `Coût pour G7 : ${formatFcfa(cout)} ${UNITES_FACTURE[v.unite_facture]}.` : 'Sert à calculer ce que l’agent coûte.'}>
+          <Champ libelle="Salaire de base par mois" aide={cout ? `${reel ? 'Coût réel (dernier bulletin)' : 'Coût estimé'} : ${formatFcfa(cout)} ${UNITES_FACTURE[v.unite_facture]}.` : 'Sert à estimer le coût tant qu’aucun bulletin n’est rangé.'}>
             <ChampMontant valeur={v.salaire_base} onChange={(x) => setV({ ...v, salaire_base: x })} />
           </Champ>
           <Champ libelle="Prix facturé au client" aide={plancher ? `Minimum selon la convention : ${formatFcfa(plancher)}.` : null}>
@@ -216,9 +263,30 @@ function FicheAgent({ a, clients, peutEcrire, estGerant, fermer, enregistre }) {
           <Champ libelle="Matricule CNSS"><input value={v.matricule_cnss} onChange={ch('matricule_cnss')} /></Champ>
           <Champ libelle="Téléphone"><input type="tel" value={v.telephone} onChange={ch('telephone')} /></Champ>
         </div>
-        <Champ libelle="Note"><input value={v.note} onChange={ch('note')} /></Champ>
+        <Champ libelle="Note"><textarea rows={2} value={v.note} onChange={ch('note')} /></Champ>
       </fieldset>
       <Erreur message={erreur} />
+
+      {historique.length > 0 && (
+        <>
+          <h3 className="xp-section-titre">Mois par mois <small>bulletins et factures</small></h3>
+          <div className="xp-liste">
+            {historique.map((h) => (
+              <div key={h.periode} className="xp-ligne">
+                <span className="xp-ligne-texte">
+                  <strong style={{ textTransform: 'capitalize' }}>{nomPeriode(h.periode)}</strong>
+                  <small>Facturé {h.facture ? formatFcfa(h.facture) : '— (rien à son nom)'} · coûté {h.cout ? formatFcfa(h.cout) : '— (pas de bulletin)'}{h.unites.length ? ` · ${h.unites.join(', ')}` : ''}</small>
+                  {h.notes.map((n, i) => <span key={i} className="g7-detail vigilance petit">{n}</span>)}
+                </span>
+                <span className="xp-ligne-valeur">
+                  {h.marge === null ? '—' : <span className={h.marge < 0 ? 'texte-erreur' : ''}>{h.marge > 0 ? '+' : ''}{formatFcfa(h.marge)}</span>}
+                  <small>{h.taux === null ? '' : `${h.taux} % gardé`}</small>
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </Modale>
   )
 }
