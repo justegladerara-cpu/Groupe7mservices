@@ -68,7 +68,8 @@ export function Chiffre({ valeur, duree = 800 }) {
     };
     setT(0);
     image = requestAnimationFrame(pas);
-    return () => cancelAnimationFrame(image);
+    // En mode strict, React relance l'effet : on remet l'ancien texte pour que l'animation reparte.
+    return () => { cancelAnimationFrame(image); precedent.current = avant; };
   }, [texte, duree]);
   if (typeof texte !== 'string' || t >= 1) return texte ?? null;
   const n = premierNombre(texte);

@@ -90,3 +90,4 @@ fieldset.g7-champs { display: grid; gap: 14px; margin: 0; padding: 0; border: 0;
 }
 .g7-form { max-width: 420px; }
 .g7-boutons { display: flex; gap: 8px; flex-wrap: wrap; }
+.xp-aujourdhui-courbe, .xp-aujourdhui-courbe .xp-barres { width: 100%; }
