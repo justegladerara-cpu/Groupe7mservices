@@ -59,14 +59,14 @@ export function numeroDejaPris(factures, numero, idActuel) {
 // ---------- Contrôle : agents facturés absents de la paie ----------
 
 const sansAccent = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
-const MOTS_COMMUNS = new Set(['JEAN', 'PAUL', 'CLAUDE', 'MARIE', 'PIERRE', 'JACQUES'])
+const MOTS_COMMUNS = new Set(['JEAN', 'PAUL', 'CLAUDE', 'MARIE', 'PIERRE', 'JACQUES', 'AGENT'])
 function mots(nom) {
   return sansAccent(nom).split(/[^A-Z]+/).filter((m) => m.length >= 4 && !MOTS_COMMUNS.has(m))
 }
 function proches(a, b) {
   if (a === b) return true
   if (Math.min(a.length, b.length) < 6 || Math.abs(a.length - b.length) > 1) return false
-  // Une lettre de différence (MIYAMONA / MYAMONA, LOEMBE / LOEMBET).
+  // Une lettre de différence (un nom recopié avec une lettre en plus, en moins ou changée).
   let i = 0
   let j = 0
   let ecarts = 0
@@ -104,9 +104,10 @@ export function agentsFactures(factures) {
 
 // Agents qui apparaissent sur les factures du mois mais pas dans la paie du même mois.
 // Un seul mot commun suffit (nom écrit plus court dans la paie), sauf si un autre agent facturé porte ce mot.
-export function agentsHorsPaie(factures, paie) {
+// Les agents payés sur facture de prestation (sans bulletin) ne sont pas « oubliés » : ils sont passés dans « autres ».
+export function agentsHorsPaie(factures, paie, autres = []) {
   if (!paie?.agents) return []
-  const payes = paie.agents.split('\n').map((s) => s.trim()).filter(Boolean)
+  const payes = paie.agents.split('\n').map((s) => s.trim()).filter(Boolean).concat(autres)
   const factures_ = agentsFactures(factures)
   return factures_.filter((n) => {
     if (payes.some((p) => memeAgent(p, n))) return false
@@ -118,15 +119,23 @@ export function agentsHorsPaie(factures, paie) {
   })
 }
 
+// Noms des agents payés sur facture de prestation pendant le mois.
+export function prestatairesDu(periode, bulletins = [], agents = []) {
+  const ids = new Set(bulletins.filter((b) => b.periode === periode && b.statut_emploi === 'prestataire').map((b) => b.agent_id))
+  return (agents || []).filter((a) => ids.has(a.id)).map((a) => a.nom)
+}
+
 // ---------- Marge ----------
 
 // Ce que le mois rapporte : facturé (mois de travail) moins le coût de la paie, puis moins les frais du bureau.
 // Les frais = dépenses du mois hors salaires et cotisations (déjà comptés dans la paie).
 const POSTES_DE_PAIE = new Set(['Salaires des agents', 'Avances sur salaire', 'CNSS', 'TUS', 'IRPP retenu'])
-export function margeMois({ periode, factures, paie, depenses = [], postes = [] }) {
+// Les prestataires payés sur facture (pas dans l'état des salaires) s'ajoutent au coût de la paie.
+export function margeMois({ periode, factures, paie, depenses = [], postes = [], bulletins = [] }) {
   const duMois = factures.filter((f) => f.periode === periode)
   const facture = duMois.reduce((s, f) => s + Number(f.montant || 0), 0)
-  const coutPaie = paie ? Number(paie.brut || 0) + Number(paie.indemnites || 0) + Number(paie.charges || 0) : null
+  const prestataires = bulletins.filter((b) => b.periode === periode && b.statut_emploi === 'prestataire').reduce((s, b) => s + Number(b.cout || 0), 0)
+  const coutPaie = paie ? Number(paie.brut || 0) + Number(paie.indemnites || 0) + Number(paie.charges || 0) + prestataires : null
   const parId = Object.fromEntries(postes.map((p) => [p.id, p]))
   const frais = depenses
     .filter((d) => d.periode === periode && !POSTES_DE_PAIE.has(parId[d.poste_id]?.nom) && parId[d.poste_id]?.groupe !== 'agents')
@@ -137,6 +146,7 @@ export function margeMois({ periode, factures, paie, depenses = [], postes = [] 
     facture,
     nbFactures: duMois.length,
     coutPaie,
+    prestataires,
     apresPaie,
     taux: apresPaie === null || facture === 0 ? null : Math.round((apresPaie / facture) * 100),
     frais,

@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import { api, traduireErreur } from '../lib/api.js'
 import { decalerPeriode, formatFcfa, nomPeriode, nomPeriodeCourt, periodeDe } from '../lib/regles.js'
-import { agentsHorsPaie, margeMois } from '../lib/facturation.js'
+import { agentsHorsPaie, prestatairesDu, margeMois } from '../lib/facturation.js'
 import { Anneau, Barre, EnteteXp, Tuile, Verdict, pluriel } from '../dream/communs.jsx'
 import { Champ, ChampMontant, Erreur, Icone, Modale } from '../ui/kit.jsx'
 
 export default function Marge({ donnees, periode, setPeriode, peutEcrire, recharger, choixMois, aller }) {
   const [saisie, setSaisie] = useState(false)
-  const { factures, paie, postes, depensesPeriodes } = donnees
+  const { factures, paie, postes, depensesPeriodes, bulletins = [], agents } = donnees
   const paieDe = (p) => paie.find((x) => x.periode === p) || null
-  const calcul = (p) => margeMois({ periode: p, factures, paie: paieDe(p), depenses: depensesPeriodes, postes })
+  const calcul = (p) => margeMois({ periode: p, factures, paie: paieDe(p), depenses: depensesPeriodes, postes, bulletins })
   const m = calcul(periode)
   const avant = calcul(decalerPeriode(periode, -1))
   const lignePaie = paieDe(periode)
-  const horsPaie = agentsHorsPaie(factures.filter((f) => f.periode === periode), lignePaie)
+  const horsPaie = agentsHorsPaie(factures.filter((f) => f.periode === periode), lignePaie, prestatairesDu(periode, bulletins, agents))
 
   const ceMois = periodeDe(new Date())
   const historique = Array.from({ length: 12 }, (_, i) => decalerPeriode(ceMois, -i - 1)).map(calcul).filter((x) => x.facture || x.coutPaie)
@@ -50,7 +50,7 @@ export default function Marge({ donnees, periode, setPeriode, peutEcrire, rechar
             <div className="xp-barres">
               <Barre libelle={`Facturé (${pluriel(m.nbFactures, 'facture', 'factures')})`} valeur={formatFcfa(m.facture)} part={m.facture / maxBarre} couleur="var(--accent)" />
               <Barre libelle={`Paie des agents${lignePaie?.effectif ? ` (${lignePaie.effectif})` : ''}`} valeur={m.coutPaie === null ? 'à saisir' : formatFcfa(m.coutPaie)} part={(m.coutPaie || 0) / maxBarre} couleur="var(--orange)"
-                detail={lignePaie ? `Brut ${formatFcfa(lignePaie.brut)} · primes non imposables ${formatFcfa(lignePaie.indemnites)} · CNSS et TUS ${formatFcfa(lignePaie.charges)}` : null} />
+                detail={lignePaie ? `Brut ${formatFcfa(lignePaie.brut)} · primes non imposables ${formatFcfa(lignePaie.indemnites)} · CNSS et TUS ${formatFcfa(lignePaie.charges)}${m.prestataires ? ` · prestataires payés sur facture ${formatFcfa(m.prestataires)}` : ''}` : null} />
               <Barre libelle="Frais du bureau (loyer, électricité…)" valeur={formatFcfa(m.frais)} part={m.frais / maxBarre} couleur="var(--texte-faible)" />
             </div>
           </div>
@@ -70,6 +70,12 @@ export default function Marge({ donnees, periode, setPeriode, peutEcrire, rechar
             <Tuile className="xp-reco vigilance" titre="Paie du mois à saisir" icone="membres" verdict={{ ton: 'vigilance', texte: 'Manquant' }}
               pourquoi="Sans les totaux de la paie, la marge du mois ne peut pas être calculée. Quatre chiffres suffisent : brut, primes non imposables, CNSS et TUS de l’employeur."
               conseil={peutEcrire ? 'Saisir la paie' : null} onClick={peutEcrire ? () => setSaisie(true) : undefined} />
+          )}
+          {m.prestataires > 0 && (
+            <Tuile className="xp-reco vigilance" titre="Prestataires payés sur facture" icone="badge" valeur={formatFcfa(m.prestataires)}
+              verdict={{ ton: 'vigilance', texte: 'Hors état des salaires' }}
+              pourquoi={`${prestatairesDu(periode, bulletins, agents).join(', ')} ${prestatairesDu(periode, bulletins, agents).length > 1 ? 'sont payés' : 'est payé'} sur facture de prestation, pas sur bulletin. Ce coût est ajouté à la paie pour une marge juste. Ils ne sont pas déclarés à la CNSS.`}
+              conseil="Voir les agents" onClick={() => aller('agents')} />
           )}
           {lignePaie?.note && (
             <Tuile className="xp-reco vigilance" titre="Note sur la paie" icone="alerte" verdict={{ ton: 'vigilance', texte: 'À vérifier' }} pourquoi={lignePaie.note} />

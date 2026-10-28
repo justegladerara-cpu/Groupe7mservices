@@ -180,15 +180,15 @@ for (let i = 5; i >= 1; i--) {
     })
   }
   ajoutF('demo-client-1', 'journalier', [
-    { agent: 'Agent A', qualification: 'Électricien', unite: 'jour', quantite: 22, prix: 37000 },
-    { agent: 'Agent B', qualification: 'Manœuvre', unite: 'jour', quantite: 24, prix: 20000 },
-    { agent: 'Agent C', qualification: 'Chauffeur', unite: 'jour', quantite: 20, prix: 19800 },
+    { agent: 'ALPHA Didier', qualification: 'Électricien', unite: 'jour', quantite: 22, prix: 37000 },
+    { agent: 'BRAVO Marc', qualification: 'Manœuvre', unite: 'jour', quantite: 24, prix: 20000 },
+    { agent: 'CHARLIE Luc', qualification: 'Chauffeur', unite: 'jour', quantite: 20, prix: 19800 },
   ], i >= 3)
   ajoutF('demo-client-1', 'maintenance', [
-    { agent: 'Agent D', qualification: 'Electrical senior', unite: 'heure', quantite: 210, prix: 7536 },
+    { agent: 'DELTA Henri', qualification: 'Electrical senior', unite: 'heure', quantite: 210, prix: 7536 },
   ], i >= 3)
-  if (i % 2) ajoutF('demo-client-2', 'journalier', [{ agent: 'Agent E', qualification: 'Soudeur', unite: 'jour', quantite: 18, prix: 30000 }], i >= 2)
-  paie.push({ periode: p, effectif: 5, brut: 1650000, indemnites: 220000, charges: 450000, agents: i === 1 ? 'Agent A\nAgent B\nAgent D\nAgent E' : 'Agent A\nAgent B\nAgent C\nAgent D\nAgent E', note: null })
+  if (i % 2) ajoutF('demo-client-2', 'journalier', [{ agent: 'ECHO Serge', qualification: 'Soudeur', unite: 'jour', quantite: 18, prix: 30000 }], i >= 2)
+  paie.push({ periode: p, effectif: 5, brut: 1650000, indemnites: 220000, charges: 450000, agents: i === 1 ? 'ALPHA Didier\nBRAVO Marc\nDELTA Henri\nECHO Serge' : 'ALPHA Didier\nBRAVO Marc\nCHARLIE Luc\nDELTA Henri\nECHO Serge', note: null })
 }
 
 export const listerClients = async () => pause(clients)
@@ -219,15 +219,33 @@ export async function enregistrerPaie(ligne) {
 // ---------- Agents (fictifs) ----------
 const dansJours = (n) => dateIso(new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate() + n))
 const agents = [
-  ['Agent A', 'Électricien', 'demo-client-1', 'Base Démo (onshore)', 'cdd', -300, 200, 650000, 'jour', 37000, '100001'],
-  ['Agent B', 'Manœuvre', 'demo-client-1', 'Base Démo (onshore)', 'cdd', -200, 18, 300000, 'jour', 20000, '100002'],
-  ['Agent C', 'Chauffeur', 'demo-client-1', 'Base Démo (onshore)', 'journalier', -60, null, 330000, 'jour', 19800, null],
-  ['Agent D', 'Electrical senior', 'demo-client-1', 'Plateforme Démo (offshore)', 'cdi', -900, null, 1300000, 'heure', 7536, '100004'],
-  ['Agent E', 'Soudeur', 'demo-client-2', 'Chantier Démo', 'cdd', -120, -3, 520000, 'jour', 30000, '100005'],
+  ['ALPHA Didier', 'Électricien', 'demo-client-1', 'Base Démo (onshore)', 'cdd', -300, 200, 650000, 'jour', 37000, '100001'],
+  ['BRAVO Marc', 'Manœuvre', 'demo-client-1', 'Base Démo (onshore)', 'cdd', -200, 18, 300000, 'jour', 20000, '100002'],
+  ['CHARLIE Luc', 'Chauffeur', 'demo-client-1', 'Base Démo (onshore)', 'journalier', -60, null, 330000, 'jour', 19800, null],
+  ['DELTA Henri', 'Electrical senior', 'demo-client-1', 'Plateforme Démo (offshore)', 'cdi', -900, null, 1300000, 'heure', 7536, '100004'],
+  ['ECHO Serge', 'Soudeur', 'demo-client-2', 'Chantier Démo', 'cdd', -120, -3, 520000, 'jour', 30000, '100005'],
+  ['FOXTROT Rémi', 'Manœuvre', 'demo-client-1', 'Base Démo (onshore)', 'journalier', -40, null, null, 'jour', 20000, null],
 ].map(([nom, qualification, client_id, site, type_contrat, debut, fin, salaire_base, unite_facture, prix_facture, matricule_cnss]) => ({
   id: id(), nom, qualification, client_id, site, statut: 'actif', type_contrat, debut: dansJours(debut), fin: fin === null ? null : dansJours(fin),
   salaire_base, unite_facture, prix_facture, matricule_cnss, telephone: null, note: null,
+  statut_emploi: nom === 'FOXTROT Rémi' ? 'prestataire' : 'salarie', categorie: null,
 }))
+
+// Bulletins fictifs des deux derniers mois.
+const bulletins = []
+for (const i of [2, 1]) {
+  const p = decalerPeriode(ceMois, -i)
+  for (const [nom, unite, nombre, cout] of [['ALPHA Didier', 'jour', 22, 640000], ['BRAVO Marc', 'jour', 24, 470000], ['CHARLIE Luc', 'jour', 20, 420000], ['DELTA Henri', 'heure', 210, 1350000], ['ECHO Serge', 'jour', 18, 560000], ['FOXTROT Rémi', 'jour', 24, 384000]]) {
+    const a = agents.find((x) => x.nom === nom)
+    const prestataire = a.statut_emploi === 'prestataire'
+    bulletins.push({
+      id: id(), agent_id: a.id, periode: p, statut_emploi: a.statut_emploi, unite, nombre, taux: null,
+      brut: prestataire ? cout : Math.round(cout * 0.7), indemnites: prestataire ? 0 : Math.round(cout * 0.1), charges_patron: prestataire ? 0 : Math.round(cout * 0.2),
+      retenues: 0, avance: 0, net: null, cout, note: null,
+    })
+  }
+}
+export const listerBulletins = async () => pause([...bulletins].sort((a, b) => b.periode.localeCompare(a.periode)))
 export const listerAgents = async () => pause([...agents].sort((a, b) => a.nom.localeCompare(b.nom)))
 export async function enregistrerAgent(a) {
   if (a.id) Object.assign(agents.find((x) => x.id === a.id), a)

@@ -36,19 +36,19 @@ describe('factures', () => {
   })
 })
 
-describe('contrôle des agents', () => {
+describe('contrôle des agents (noms fictifs)', () => {
   it('reconnaît un agent malgré l’orthographe', () => {
-    expect(memeAgent('MOKOURI MALIMOUNI Azi', 'MOKOURI MALIMOINI Azi')).toBe(true)
-    expect(memeAgent('BAMANGA MAYALA Islend Marty', 'MAYALA BAMANGA Island')).toBe(true)
-    expect(memeAgent('NKAYA MOUANDA Sorel', 'NKAYA MOUYANGALA Freddy')).toBe(false)
+    expect(memeAgent('KOMBERI TALIMOUNI Ari', 'KOMBERI TALIMOINI Ari')).toBe(true)
+    expect(memeAgent('BOTANGA MALABA Irvin Marty', 'MALABA BOTANGA Irvan')).toBe(true)
+    expect(memeAgent('NZOLA MOUKANDA Serge', 'NZOLA MOUTANGALA Fabrice')).toBe(false)
   })
   it('signale les agents facturés absents de la paie', () => {
     const factures = [{ lignes: [
-      { agent: 'NKAYA MOUYANGALA Freddy' }, { agent: 'NKAYA MOUANDA Sorel' }, { agent: 'MIYAMONA Marvin' },
-      { agent: 'LIBONGA Jean Benoit' }, { agent: 'MOINARD Jean Jacques' }, { agent: '' },
+      { agent: 'NZOLA MOUTANGALA Fabrice' }, { agent: 'NZOLA MOUKANDA Serge' }, { agent: 'MIKALONA Martin' },
+      { agent: 'LIBALA Jean Bernard' }, { agent: 'MOREAUD Jean Jacques' }, { agent: '' },
     ] }]
-    const paie = { agents: 'NKAYA MOUYANGALA Freddy\nMIYAMONA NGANGA\nMOINARD Jean Jacques' }
-    expect(agentsHorsPaie(factures, paie)).toEqual(['NKAYA MOUANDA Sorel', 'LIBONGA Jean Benoit'])
+    const paie = { agents: 'NZOLA MOUTANGALA Fabrice\nMIKALONA NGASSA\nMOREAUD Jean Jacques' }
+    expect(agentsHorsPaie(factures, paie)).toEqual(['NZOLA MOUKANDA Serge', 'LIBALA Jean Bernard'])
   })
 })
 
@@ -63,5 +63,24 @@ describe('marge', () => {
       postes,
     })
     expect(m).toMatchObject({ facture: 12557448, coutPaie: 8188091, apresPaie: 4369357, taux: 35, frais: 250000, resultat: 4119357 })
+  })
+})
+
+describe('prestataires payés sur facture', () => {
+  it('ajoute leur coût à la paie du mois', () => {
+    const m = margeMois({
+      periode: '2026-08-01',
+      factures: [{ periode: '2026-08-01', montant: 1000000 }],
+      paie: { brut: 400000, indemnites: 0, charges: 100000 },
+      bulletins: [{ periode: '2026-08-01', statut_emploi: 'prestataire', cout: 200000 }, { periode: '2026-08-01', statut_emploi: 'salarie', cout: 999 }],
+    })
+    expect(m.coutPaie).toBe(700000)
+    expect(m.prestataires).toBe(200000)
+  })
+
+  it('ne les compte pas comme oubliés de la paie', () => {
+    const factures = [{ lignes: [{ agent: 'Agent Alpha Un' }, { agent: 'Agent Beta Deux' }] }]
+    expect(agentsHorsPaie(factures, { agents: 'Agent Alpha Un' }, ['Agent Beta Deux'])).toEqual([])
+    expect(agentsHorsPaie(factures, { agents: 'Agent Alpha Un' })).toEqual(['Agent Beta Deux'])
   })
 })
