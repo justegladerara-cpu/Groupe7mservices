@@ -7,29 +7,29 @@ import { STATUS_FLOW, STATUS_LABEL, STATUS_CLIENT_TEXT } from './constants'
 
 export const DEFAULT_SETTINGS: Settings = {
   brandName: 'HHHGroup',
-  currency: 'CDF',
-  currencySymbol: 'FC',
-  fxRate: 2850,
+  currency: 'XAF',
+  currencySymbol: 'FCFA',
+  fxRate: 600,
   serviceFeePct: 35,
   transportPerKgUsd: 11,
   minWeightKg: 0.5,
   customsPct: 10,
-  homeDeliveryFee: 5000,
-  relayDeliveryFee: 2000,
+  homeDeliveryFee: 1500,
+  relayDeliveryFee: 500,
   expressEnabled: false,
   expressSurchargePct: 60,
   standardDaysMin: 15,
   standardDaysMax: 25,
   expressDaysMin: 7,
   expressDaysMax: 12,
-  roundTo: 500,
-  referralReward: 5000,
-  referralWelcome: 3000,
-  monthlyFixedCosts: 1_250_000,
+  roundTo: 100,
+  referralReward: 1000,
+  referralWelcome: 1000,
+  monthlyFixedCosts: 300_000,
   targetMarginPct: 20,
   whatsappNumber: '',
-  supportEmail: 'contact@hhhgroup.cd',
-  launchCity: 'Kinshasa',
+  supportEmail: 'contact@hhhgroup.cg',
+  launchCity: 'Brazzaville',
   quoteValidityDays: 3,
   paymentsLive: false,
 }
@@ -98,33 +98,32 @@ export function buildProducts(): Product[] {
 }
 
 const FIRST = ['Grace', 'Merveille', 'Ornella', 'Divine', 'Glodie', 'Exaucée', 'Benedicte', 'Prisca', 'Christelle', 'Nadège', 'Rachel', 'Sarah', 'Dorcas', 'Esther', 'Fiston', 'Patrick', 'Héritier', 'Junior', 'Ruth', 'Plamedie', 'Gloire', 'Jonathan', 'Ketsia', 'Daniella', 'Emmanuel', 'Chancelvie', 'Naomi', 'Arsène', 'Mireille', 'Josué', 'Lydie', 'Cédric', 'Falonne', 'Benjamin', 'Gracia', 'Deborah', 'Christian', 'Sandrine', 'Trésor', 'Bijou', 'Precieuse', 'Yannick']
-const LAST = ['Mbuyi', 'Kabeya', 'Lukusa', 'Ilunga', 'Mukendi', 'Tshibanda', 'Kalala', 'Nsimba', 'Mavungu', 'Mbala', 'Lunda', 'Makiese', 'Kanku', 'Bokele', 'Mpiana', 'Nzuzi', 'Mutombo', 'Kasongo', 'Bolamba', 'Diala', 'Kiala', 'Tshala']
-export const COMMUNES = ['Gombe', 'Limete', 'Ngaliema', 'Lingwala', 'Kintambo', 'Bandalungwa', 'Kalamu', 'Lemba', 'Matete', 'Masina', 'Kasa-Vubu', 'Barumbu', 'Kinshasa', 'Ngiri-Ngiri', 'Mont-Ngafula']
+const LAST = ['Mabiala', 'Moukoko', 'Ngoma', 'Bouanga', 'Massamba', 'Makosso', 'Nkounkou', 'Malonga', 'Mbemba', 'Okemba', 'Itoua', 'Obambi', 'Loemba', 'Tchicaya', 'Mavoungou', 'Samba', 'Kimbembe', 'Bakala', 'Ondongo', 'Mboungou', 'Nganga', 'Elenga']
+export const COMMUNES = ['Bacongo', 'Makélékélé', 'Poto-Poto', 'Moungali', 'Ouenzé', 'Talangaï', 'Mfilou', 'Madibou', 'Djiri', 'Plateau (centre-ville)', 'Pointe-Noire — Lumumba', 'Pointe-Noire — Tié-Tié', 'Pointe-Noire — Loandjili', 'Pointe-Noire — Mvou-Mvou']
 
 export const RELAY_POINTS: RelayPoint[] = [
-  { id: 'rp-gombe', name: 'Point relais Gombe — Galerie Présidentielle', commune: 'Gombe', address: 'Bd du 30 Juin, Galerie Présidentielle, local 12', hours: 'Lun-Sam 9h-18h', phone: '+243 81 000 1001', active: true },
-  { id: 'rp-limete', name: 'Point relais Limete — 7e rue', commune: 'Limete', address: '7e rue, Quartier industriel, en face de la pharmacie', hours: 'Lun-Sam 8h30-19h', phone: '+243 81 000 1002', active: true },
-  { id: 'rp-bandal', name: 'Point relais Bandal — Place Moulaert', commune: 'Bandalungwa', address: 'Av. Kasa-Vubu, Place Moulaert', hours: 'Lun-Sam 9h-18h30', phone: '+243 81 000 1003', active: true },
-  { id: 'rp-ngaliema', name: 'Point relais Ngaliema — UPN', commune: 'Ngaliema', address: 'Route de Matadi, rond-point UPN', hours: 'Lun-Sam 9h-18h', phone: '+243 81 000 1004', active: true },
-  { id: 'rp-lemba', name: 'Point relais Lemba — Campus UNIKIN', commune: 'Lemba', address: 'Av. de l’Université, entrée campus', hours: 'Lun-Ven 9h-17h', phone: '+243 81 000 1005', active: false },
+  { id: 'rp-poto', name: 'Point relais Poto-Poto — Marché', commune: 'Poto-Poto', address: 'Avenue de la Paix, face au marché de Poto-Poto', hours: 'Lun-Sam 8h30-18h30', phone: '+242 06 000 1001', active: true },
+  { id: 'rp-bacongo', name: 'Point relais Bacongo — Marché Total', commune: 'Bacongo', address: 'Avenue Matsoua, près du marché Total', hours: 'Lun-Sam 9h-18h', phone: '+242 06 000 1002', active: true },
+  { id: 'rp-moungali', name: 'Point relais Moungali — Rond-point', commune: 'Moungali', address: 'Rond-point Moungali, avenue des Trois Martyrs', hours: 'Lun-Sam 9h-18h30', phone: '+242 06 000 1003', active: true },
+  { id: 'rp-talangai', name: 'Point relais Talangaï — Marché', commune: 'Talangaï', address: 'Avenue Marien Ngouabi, marché de Talangaï', hours: 'Lun-Sam 9h-18h', phone: '+242 06 000 1004', active: true },
+  { id: 'rp-pnr', name: 'Point relais Pointe-Noire — Grand Marché', commune: 'Pointe-Noire — Lumumba', address: 'Avenue Charles de Gaulle, près du Grand Marché', hours: 'Lun-Sam 9h-18h', phone: '+242 05 000 1005', active: true },
+  { id: 'rp-tietie', name: 'Point relais Pointe-Noire — Tié-Tié', commune: 'Pointe-Noire — Tié-Tié', address: 'Rond-point Kassaï', hours: 'Lun-Ven 9h-17h', phone: '+242 05 000 1006', active: false },
 ]
 
 export const COURIERS: Courier[] = [
-  { id: 'crr-1', name: 'Jean-Marie Kanda', phone: '+243 82 000 2001', zone: 'Gombe, Lingwala, Kintambo, Barumbu', vehicle: 'Moto', active: true },
-  { id: 'crr-2', name: 'Didier Nkoyi', phone: '+243 82 000 2002', zone: 'Limete, Matete, Lemba, Masina', vehicle: 'Moto', active: true },
-  { id: 'crr-3', name: 'Express Kin Livraison', phone: '+243 82 000 2003', zone: 'Tout Kinshasa', vehicle: 'Voiture', active: true },
+  { id: 'crr-1', name: 'Jean-Marie Mabiala', phone: '+242 06 000 2001', zone: 'Brazzaville sud : Bacongo, Makélékélé, Plateau, Mfilou', vehicle: 'Moto', active: true },
+  { id: 'crr-2', name: 'Didier Okemba', phone: '+242 06 000 2002', zone: 'Brazzaville nord : Poto-Poto, Moungali, Ouenzé, Talangaï, Djiri', vehicle: 'Moto', active: true },
+  { id: 'crr-3', name: 'Océan Express Livraison', phone: '+242 05 000 2003', zone: 'Tout Pointe-Noire', vehicle: 'Voiture', active: true },
 ]
 
 export const FORWARDERS: Forwarder[] = [
-  { id: 'fwd-1', name: 'TransCongo Cargo', contact: 'M. Lofembe', phone: '+243 99 000 3001', route: 'Guangzhou → Kinshasa (aérien groupé)', ratePerKgUsd: 9.5, avgDays: 14, active: true, notes: 'Partenaire unique au lancement. Groupage hebdomadaire le mardi. Assurance colis groupés incluse au-delà de 50 kg.' },
-  { id: 'fwd-2', name: 'Kin Fret International', contact: 'Mme Ngalula', phone: '+243 99 000 3002', route: 'Paris/Guangzhou → Kinshasa', ratePerKgUsd: 12, avgDays: 10, active: false, notes: 'Solution de secours, plus rapide mais plus chère. Candidat pour le niveau Express.' },
+  { id: 'fwd-1', name: 'Congo Fret Express', contact: 'M. Nkounkou', phone: '+242 06 000 3001', route: 'Guangzhou → Brazzaville Maya-Maya (aérien groupé)', ratePerKgUsd: 9.5, avgDays: 14, active: true, notes: 'Partenaire unique au lancement. Groupage hebdomadaire le mardi. Assurance colis groupés incluse au-delà de 50 kg. Réexpédition vers Pointe-Noire par route ou vol intérieur.' },
+  { id: 'fwd-2', name: 'Atlantic Cargo PNR', contact: 'Mme Loemba', phone: '+242 05 000 3002', route: 'Paris/Guangzhou → Pointe-Noire', ratePerKgUsd: 12, avgDays: 10, active: false, notes: 'Solution de secours, plus rapide mais plus chère. Candidat pour le niveau Express.' },
 ]
 
 export const OPERATORS: PaymentOperator[] = [
-  { id: 'mpesa', name: 'M-Pesa (Vodacom)', short: 'M-Pesa', color: '#e11d48', active: true, merchantCode: 'À configurer' },
-  { id: 'orange', name: 'Orange Money', short: 'Orange Money', color: '#f97316', active: true, merchantCode: 'À configurer' },
+  { id: 'mtn', name: 'MTN Mobile Money', short: 'MTN MoMo', color: '#facc15', active: true, merchantCode: 'À configurer' },
   { id: 'airtel', name: 'Airtel Money', short: 'Airtel Money', color: '#dc2626', active: true, merchantCode: 'À configurer' },
-  { id: 'afrimoney', name: 'Afrimoney (Africell)', short: 'Afrimoney', color: '#7c3aed', active: false, merchantCode: 'À configurer' },
 ]
 
 export const TEMPLATES: Template[] = [
@@ -133,7 +132,7 @@ export const TEMPLATES: Template[] = [
   { id: 'paiement_confirme', title: 'Paiement reçu — {numero}', body: 'Merci {prenom} ! Paiement de {total} reçu pour la commande {numero}. Livraison prévue avant le {date_promise}.', channels: ['whatsapp', 'sms', 'email', 'app'] },
   { id: 'achat_fournisseur', title: 'Articles commandés — {numero}', body: 'Bonne nouvelle {prenom} : les articles de ta commande {numero} sont commandés chez notre fournisseur.', channels: ['whatsapp', 'app'] },
   { id: 'en_transit', title: 'Ton colis voyage — {numero}', body: '{prenom}, ton colis {numero} est en route vers le Congo avec notre transitaire. Suivi : {suivi}.', channels: ['whatsapp', 'sms', 'app'] },
-  { id: 'dedouanement', title: 'Colis arrivé — {numero}', body: '{prenom}, ton colis {numero} est arrivé à Kinshasa. Nous gérons la douane, rien à faire de ton côté.', channels: ['whatsapp', 'app'] },
+  { id: 'dedouanement', title: 'Colis arrivé — {numero}', body: '{prenom}, ton colis {numero} est arrivé au Congo. Nous gérons la douane, rien à faire de ton côté.', channels: ['whatsapp', 'app'] },
   { id: 'en_livraison', title: 'Livraison en cours — {numero}', body: '{prenom}, ton colis {numero} est en livraison ({mode_livraison}). Garde ton téléphone à portée de main.', channels: ['whatsapp', 'sms', 'app'] },
   { id: 'livree', title: 'Colis livré — {numero}', body: 'Colis {numero} remis. Merci {prenom} ! Donne ton avis en 1 minute, il aide d’autres clients à nous faire confiance.', channels: ['whatsapp', 'email', 'app'] },
   { id: 'annulee', title: 'Commande annulée — {numero}', body: '{prenom}, ta commande {numero} a été annulée. Si un paiement a été fait, il te sera remboursé.', channels: ['whatsapp', 'sms', 'app'] },
@@ -167,11 +166,15 @@ export const ROADMAP: RoadmapTask[] = [
 ].map(([phase, title, done], i) => ({ id: `rm-${i + 1}`, phase: phase as string, title: title as string, done: done as boolean }))
 
 export const CITIES: City[] = [
-  { id: 'city-kin', name: 'Kinshasa', country: 'RDC', status: 'active', condition: 'Ville de lancement — persona Grace, 18-30 ans.' },
-  { id: 'city-lub', name: 'Lubumbashi', country: 'RDC', status: 'planifiee', condition: 'Ouverture après preuve de rentabilité à Kinshasa (3 mois consécutifs au-dessus du seuil).' },
-  { id: 'city-gom', name: 'Goma', country: 'RDC', status: 'planifiee', condition: 'Même transitaire ou réseau élargi.' },
-  { id: 'city-bzv', name: 'Brazzaville', country: 'Congo', status: 'planifiee', condition: 'Expansion régionale — répliquer le modèle validé.' },
-  { id: 'city-pnr', name: 'Pointe-Noire', country: 'Congo', status: 'planifiee', condition: 'Expansion régionale — après Brazzaville.' },
+  { id: 'city-bzv', name: 'Brazzaville', country: 'République du Congo', status: 'active', condition: 'Ville de lancement — persona Grace, 18-30 ans.' },
+  { id: 'city-pnr', name: 'Pointe-Noire', country: 'République du Congo', status: 'pilote', condition: 'Pilote ouvert : point relais Grand Marché + livreur partenaire.' },
+  { id: 'city-dolisie', name: 'Dolisie', country: 'République du Congo', status: 'planifiee', condition: 'Après 3 mois consécutifs au-dessus du seuil de rentabilité à Brazzaville.' },
+  { id: 'city-lbv', name: 'Libreville', country: 'Gabon', status: 'planifiee', condition: 'Expansion CEMAC : même devise (FCFA), répliquer le modèle validé.' },
+  { id: 'city-dla', name: 'Douala / Yaoundé', country: 'Cameroun', status: 'planifiee', condition: 'Expansion CEMAC : marché le plus grand de la zone.' },
+  { id: 'city-bgf', name: 'Bangui', country: 'Centrafrique', status: 'planifiee', condition: 'Expansion CEMAC.' },
+  { id: 'city-ndj', name: 'N’Djamena', country: 'Tchad', status: 'planifiee', condition: 'Expansion CEMAC.' },
+  { id: 'city-ssg', name: 'Malabo', country: 'Guinée équatoriale', status: 'planifiee', condition: 'Expansion CEMAC.' },
+  { id: 'city-kin', name: 'Kinshasa', country: 'RDC', status: 'planifiee', condition: 'Afrique centrale hors CEMAC : autre devise et autres opérateurs Mobile Money.' },
 ]
 
 export interface SeedData {
@@ -183,12 +186,12 @@ export interface SeedData {
 
 const REVIEW_TEXTS = [
   'Enfin une plateforme sérieuse ! Ma robe est arrivée en 19 jours, exactement comme sur la photo.',
-  'J’ai payé avec M-Pesa en 1 minute. J’ai reçu des messages WhatsApp à chaque étape, je n’ai jamais eu besoin de relancer.',
+  'J’ai payé avec MTN MoMo en 1 minute. J’ai reçu des messages WhatsApp à chaque étape, je n’ai jamais eu besoin de relancer.',
   'Avant je passais par des revendeurs sur Instagram, j’ai perdu de l’argent deux fois. Ici tout est clair, le prix ne change pas.',
-  'Récupéré au point relais de Limete, très pratique. Je recommande.',
+  'Récupéré au point relais de Poto-Poto, très pratique. Je recommande.',
   'Un peu long (24 jours) mais dans le délai annoncé. Produit conforme.',
   'Le service client a répondu vite quand j’avais une question sur la taille.',
-  'Les baskets sont top ! Livraison à domicile à Ngaliema sans souci.',
+  'Les baskets sont top ! Livraison à domicile à Bacongo sans souci.',
   'J’ai collé le lien SHEIN, on m’a donné le prix tout compris le jour même. Simple.',
   'Très bon suivi, colis bien emballé. Ma deuxième commande déjà !',
   'Prix correct vu que tout est compris : douane, transport, livraison. Pas de surprise.',
@@ -205,19 +208,19 @@ export function buildSeed(): SeedData {
   const relayActive = RELAY_POINTS.filter((x) => x.active)
 
   const users: User[] = [
-    { id: 'usr-admin', name: 'Hortense Hamba', email: 'admin@hhhgroup.cd', phone: '+243 81 000 0001', password: 'admin1234', role: 'admin', city: 'Kinshasa', referralCode: 'HHH-ADMIN', credit: 0, createdAt: '2026-05-01T08:00:00Z', active: true },
-    { id: 'usr-ops', name: 'Patrick Mbala', email: 'achats@hhhgroup.cd', phone: '+243 81 000 0002', password: 'ops1234', role: 'operations', city: 'Kinshasa', referralCode: 'HHH-OPS', credit: 0, createdAt: '2026-05-01T08:00:00Z', active: true },
-    { id: 'usr-support', name: 'Ruth Nsimba', email: 'support@hhhgroup.cd', phone: '+243 81 000 0003', password: 'support1234', role: 'support', city: 'Kinshasa', referralCode: 'HHH-SUP', credit: 0, createdAt: '2026-05-01T08:00:00Z', active: true },
-    { id: 'usr-grace', name: 'Grace Mbuyi', email: 'grace@demo.cd', phone: '+243 81 000 1024', password: 'demo1234', role: 'client', city: 'Kinshasa', commune: 'Limete', address: '12, av. des Poids Lourds, Q. Industriel', referralCode: 'GRACE24', credit: 5000, createdAt: '2026-06-02T10:00:00Z', active: true },
+    { id: 'usr-admin', name: 'Hortense Hamba', email: 'admin@hhhgroup.cg', phone: '+242 06 000 0001', password: 'admin1234', role: 'admin', city: 'Brazzaville', referralCode: 'HHH-ADMIN', credit: 0, createdAt: '2026-05-01T08:00:00Z', active: true },
+    { id: 'usr-ops', name: 'Patrick Massamba', email: 'achats@hhhgroup.cg', phone: '+242 06 000 0002', password: 'ops1234', role: 'operations', city: 'Brazzaville', referralCode: 'HHH-OPS', credit: 0, createdAt: '2026-05-01T08:00:00Z', active: true },
+    { id: 'usr-support', name: 'Ruth Malonga', email: 'support@hhhgroup.cg', phone: '+242 06 000 0003', password: 'support1234', role: 'support', city: 'Brazzaville', referralCode: 'HHH-SUP', credit: 0, createdAt: '2026-05-01T08:00:00Z', active: true },
+    { id: 'usr-grace', name: 'Grace Mabiala', email: 'grace@demo.cg', phone: '+242 06 000 1024', password: 'demo1234', role: 'client', city: 'Brazzaville', commune: 'Moungali', address: '12, rue Mbochis, quartier Plateau des 15 ans', referralCode: 'GRACE24', credit: 1000, createdAt: '2026-06-02T10:00:00Z', active: true },
   ]
   const clients: User[] = [users[3]]
   for (let i = 0; i < 88; i++) {
     const fn = FIRST[(i + 1) % FIRST.length], ln = LAST[(i * 7) % LAST.length]
     const created = new Date(new Date('2026-05-20').getTime() + r() * (now.getTime() - new Date('2026-05-20').getTime()) * 0.9)
     const u: User = {
-      id: `usr-c${i + 1}`, name: `${fn} ${ln}`, email: `${fn.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')}.${ln.toLowerCase()}${i}@exemple.cd`,
-      phone: `+243 8${1 + (i % 9)} 000 ${String(1100 + i).padStart(4, '0')}`, password: 'demo1234', role: 'client', city: 'Kinshasa',
-      commune: pick(COMMUNES), address: `${1 + Math.floor(r() * 120)}, avenue ${pick(['Kasa-Vubu', 'de la Libération', 'Lumumba', 'Bokassa', 'des Huileries', 'Kabinda', 'Kianza'])}`,
+      id: `usr-c${i + 1}`, name: `${fn} ${ln}`, email: `${fn.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')}.${ln.toLowerCase()}${i}@exemple.cg`,
+      phone: `+242 0${i % 3 === 0 ? 5 : 6} 000 ${String(1100 + i).padStart(4, '0')}`, password: 'demo1234', role: 'client', city: 'Brazzaville',
+      commune: pick(COMMUNES), address: `${1 + Math.floor(r() * 120)}, avenue ${pick(['de la Paix', 'des Trois Martyrs', 'Matsoua', 'Marien Ngouabi', 'Loutassi', 'de France', 'Charles de Gaulle'])}`,
       referralCode: `${fn.toUpperCase().slice(0, 5).normalize('NFD').replace(/[̀-ͯ]/g, '')}${i + 10}`,
       referredBy: i % 5 === 0 ? 'GRACE24' : undefined, credit: 0, createdAt: created.toISOString(), active: true,
     }
@@ -264,24 +267,24 @@ export function buildSeed(): SeedData {
     const stepDays = [0, 0.05, 2 + r() * 3, 5 + r() * 3, 15 + r() * 4, 17 + r() * 3, 19 + r() * 4]
     for (let s = 0; s <= stage; s++) {
       const at = new Date(created.getTime() + stepDays[s] * 86400000)
-      history.push({ status: STATUS_FLOW[s], at: at.toISOString(), by: s <= 1 ? 'Système' : s === 2 ? 'Patrick Mbala' : s <= 4 ? 'TransCongo Cargo' : 'Équipe livraison' })
+      history.push({ status: STATUS_FLOW[s], at: at.toISOString(), by: s <= 1 ? 'Système' : s === 2 ? 'Patrick Massamba' : s <= 4 ? 'Congo Fret Express' : 'Équipe livraison' })
     }
     const status: OrderStatus = cancelled ? 'annulee' : STATUS_FLOW[stage]
-    if (cancelled) history.push({ status: 'annulee', at: new Date(created.getTime() + 86400000).toISOString(), by: 'Ruth Nsimba', note: 'Demande du client (changement d’avis avant achat)' })
+    if (cancelled) history.push({ status: 'annulee', at: new Date(created.getTime() + 86400000).toISOString(), by: 'Ruth Malonga', note: 'Demande du client (changement d’avis avant achat)' })
     const ratio = () => 0.85 + r() * 0.3
     const realCosts = stage >= 2 && !cancelled ? {
       product: Math.round(breakdown.productCost * (0.9 + r() * 0.15)),
       ...(stage >= 3 ? { transport: Math.round(breakdown.transport * ratio() * 0.88) } : {}),
       ...(stage >= 4 ? { customs: Math.round(breakdown.customs * ratio()) } : {}),
-      ...(stage >= 6 ? { delivery: delivery === 'relais' ? 1200 : 3500 } : {}),
+      ...(stage >= 6 ? { delivery: delivery === 'relais' ? 300 : 1000 } : {}),
     } : {}
     const number = `HHH-${String(1000 + seq++)}`
     const o: Order = {
       id: `ord-${k + 1}`, number, customerId: cust.id, items, delivery,
       relayPointId: delivery === 'relais' ? pick(relayActive).id : undefined,
       commune: cust.commune, address: delivery === 'domicile' ? cust.address : undefined, phone: cust.phone,
-      paymentOperator: pick(['mpesa', 'mpesa', 'orange', 'airtel']),
-      paymentRef: stage >= 1 ? `MP${Math.floor(100000000 + r() * 899999999)}` : undefined,
+      paymentOperator: pick(['mtn', 'mtn', 'airtel']),
+      paymentRef: stage >= 1 ? `MM${Math.floor(100000000 + r() * 899999999)}` : undefined,
       paidAt: stage >= 1 ? history[1].at : undefined,
       breakdown, total: breakdown.total, status, history,
       courierId: stage >= 5 && delivery === 'domicile' ? pick(COURIERS).id : undefined,
@@ -320,7 +323,7 @@ export function buildSeed(): SeedData {
       id: `bat-${bseq}`, number: `ACH-${String(bseq).padStart(3, '0')}`, supplierId, orderIds: os.map((o) => o.id),
       supplierOrderRef: supplierId === 'sup-shein' ? `GSH${Math.floor(10000000 + r() * 89999999)}` : supplierId === 'sup-cj' ? `CJ${Math.floor(1000000 + r() * 8999999)}` : `AE${Math.floor(100000000 + r() * 899999999)}`,
       amountUsd: Math.round(os.reduce((s, o) => s + o.items.reduce((a, it) => a + it.supplierPriceUsd * it.qty, 0), 0) * (0.92 + r() * 0.1) * 100) / 100,
-      buyer: 'Patrick Mbala', createdAt: at, status: os.every((o) => STATUS_FLOW.indexOf(o.status) >= 3) ? 'recue_entrepot' : 'commandee',
+      buyer: 'Patrick Massamba', createdAt: at, status: os.every((o) => STATUS_FLOW.indexOf(o.status) >= 3) ? 'recue_entrepot' : 'commandee',
     }
     batches.push(b); bseq++
     os.forEach((o) => (o.purchaseBatchId = b.id))
@@ -380,7 +383,7 @@ export function buildSeed(): SeedData {
   const delivered = orders.filter((o) => o.status === 'livree')
   const claimSamples: [Claim['reason'], string, Claim['status'], Claim['resolution']?, number?][] = [
     ['non_conforme', 'La robe reçue est en taille S alors que j’ai commandé M.', 'en_cours'],
-    ['endommage', 'La boîte du parfum était écrasée, le flacon est fissuré.', 'resolue', 'avoir', 15000],
+    ['endommage', 'La boîte du parfum était écrasée, le flacon est fissuré.', 'resolue', 'avoir', 4000],
     ['retard', 'Ma commande dépasse le délai annoncé de 25 jours.', 'resolue', 'aucune'],
     ['manquant', 'Il manque une des deux housses de coussin dans le colis.', 'ouverte'],
     ['non_conforme', 'La couleur des baskets ne correspond pas à la photo.', 'rejetee', 'aucune'],
@@ -391,8 +394,8 @@ export function buildSeed(): SeedData {
     const cust = users.find((u) => u.id === o.customerId)!
     const created = new Date(new Date(o.deliveredAt!).getTime() + 86400000)
     const msgs: Claim['messages'] = [{ at: created.toISOString(), from: 'client', author: cust.name, text: desc }]
-    if (status !== 'ouverte') msgs.push({ at: new Date(created.getTime() + 5 * 3600_000).toISOString(), from: 'equipe', author: 'Ruth Nsimba', text: 'Bonjour, merci pour votre message. Pouvez-vous nous envoyer une photo de l’article reçu ? Nous traitons votre demande en priorité.' })
-    if (status === 'resolue' || status === 'rejetee') msgs.push({ at: new Date(created.getTime() + 2 * 86400000).toISOString(), from: 'equipe', author: 'Ruth Nsimba', text: status === 'resolue' ? 'Votre réclamation est résolue. Merci pour votre patience.' : 'Après vérification, la couleur correspond à la fiche fournisseur (variation d’écran). Nous restons disponibles.' })
+    if (status !== 'ouverte') msgs.push({ at: new Date(created.getTime() + 5 * 3600_000).toISOString(), from: 'equipe', author: 'Ruth Malonga', text: 'Bonjour, merci pour votre message. Pouvez-vous nous envoyer une photo de l’article reçu ? Nous traitons votre demande en priorité.' })
+    if (status === 'resolue' || status === 'rejetee') msgs.push({ at: new Date(created.getTime() + 2 * 86400000).toISOString(), from: 'equipe', author: 'Ruth Malonga', text: status === 'resolue' ? 'Votre réclamation est résolue. Merci pour votre patience.' : 'Après vérification, la couleur correspond à la fiche fournisseur (variation d’écran). Nous restons disponibles.' })
     return {
       id: `clm-${i + 1}`, number: `REC-${String(30 + i)}`, orderId: o.id, customerId: cust.id, reason, description: desc, status, resolution, refundAmount: refund,
       messages: msgs, createdAt: created.toISOString(), closedAt: status === 'resolue' || status === 'rejetee' ? msgs[msgs.length - 1].at : undefined,

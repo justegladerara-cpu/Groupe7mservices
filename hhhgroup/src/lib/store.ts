@@ -319,7 +319,7 @@ export const baseStore = create<State>()(
       }
     },
     {
-      name: 'hhhgroup-demo-v1',
+      name: 'hhhgroup-demo-cg-v1',
       storage: createJSONStorage(() => {
         try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return localStorage } catch {
           const m = new Map<string, string>()

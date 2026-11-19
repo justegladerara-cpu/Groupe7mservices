@@ -1,0 +1,44 @@
+name: HHHGroup en ligne
+
+# Construit la démo HHHGroup et la publie dans le sous-dossier hhhgroup/ de la branche gh-pages,
+# sans toucher au reste du site (tableau de bord Groupe7M).
+on:
+  push:
+    branches: [claude/project-thread-2ay7lx]
+    paths: ['hhhgroup/**', '.github/workflows/hhhgroup.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: hhhgroup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: hhhgroup/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Publier dans gh-pages/hhhgroup
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git clone -q --depth 1 --branch gh-pages "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" /tmp/pages
+          rm -rf /tmp/pages/hhhgroup
+          cp -r dist /tmp/pages/hhhgroup
+          touch /tmp/pages/.nojekyll
+          cd /tmp/pages
+          git add -A
+          git commit -qm "HHHGroup ${GITHUB_SHA::7}" || echo "Rien à publier"
+          git push -q origin gh-pages

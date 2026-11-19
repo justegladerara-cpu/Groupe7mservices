@@ -27,7 +27,7 @@ export default function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col pb-16 md:pb-0">
       <div className="bg-brand-950 px-4 py-1.5 text-center text-xs font-medium text-brand-100">
-        Paiement Mobile Money · Prix tout compris · Livraison à Kinshasa en 15-25 jours
+        Paiement Mobile Money · Prix tout compris · Livraison à Brazzaville et Pointe-Noire en 15-25 jours
       </div>
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4">
@@ -98,9 +98,9 @@ export default function PublicLayout() {
           <div>
             <div className="mb-3 text-sm font-semibold text-white">Paiement</div>
             <div className="flex flex-wrap gap-2 text-xs">
-              {['M-Pesa', 'Orange Money', 'Airtel Money'].map((m) => <span key={m} className="rounded-md bg-slate-800 px-2 py-1">{m}</span>)}
+              {['MTN MoMo', 'Airtel Money'].map((m) => <span key={m} className="rounded-md bg-slate-800 px-2 py-1">{m}</span>)}
             </div>
-            <p className="mt-4 text-xs text-slate-500">Kinshasa, RDC · Livraison à domicile ou en point relais</p>
+            <p className="mt-4 text-xs text-slate-500">République du Congo · Brazzaville & Pointe-Noire · Bientôt toute l’Afrique centrale</p>
           </div>
         </div>
         <div className="border-t border-slate-800 py-4 text-center text-xs text-slate-500">© 2026 HHHGroup — Plateforme d’achat international</div>

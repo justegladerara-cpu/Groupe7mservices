@@ -2,8 +2,14 @@
 
 « Tu choisis, tu paies, nous nous occupons du reste. »
 
-Plateforme qui permet aux clients de Kinshasa d'acheter sur SHEIN et d'autres boutiques
+Plateforme qui permet aux clients de la République du Congo (Brazzaville, Pointe-Noire, puis toute l'Afrique centrale) d'acheter sur SHEIN et d'autres boutiques
 internationales, de payer en Mobile Money et de suivre leur colis jusqu'à la livraison.
+
+## Démo en ligne
+
+https://justegladerara-cpu.github.io/Groupe7mservices/hhhgroup/ (publiée par le workflow `.github/workflows/hhhgroup.yml`).
+
+Prix en FCFA (XAF, monnaie commune CEMAC), paiement MTN MoMo / Airtel Money.
 
 ## Démarrer
 
@@ -18,10 +24,10 @@ npm run build    # site statique dans dist/
 
 | Rôle | E-mail | Mot de passe |
 |---|---|---|
-| Cliente (Grace) | grace@demo.cd | demo1234 |
-| Administratrice | admin@hhhgroup.cd | admin1234 |
-| Équipe achats & logistique | achats@hhhgroup.cd | ops1234 |
-| Service client | support@hhhgroup.cd | support1234 |
+| Cliente (Grace) | grace@demo.cg | demo1234 |
+| Administratrice | admin@hhhgroup.cg | admin1234 |
+| Équipe achats & logistique | achats@hhhgroup.cg | ops1234 |
+| Service client | support@hhhgroup.cg | support1234 |
 
 La page de connexion propose aussi des boutons d'accès rapide.
 

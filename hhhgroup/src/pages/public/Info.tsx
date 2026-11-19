@@ -49,9 +49,9 @@ export function HowItWorks() {
     { i: <ShoppingCart />, t: 'Commande', d: 'Tu choisis un article dans le catalogue ou tu colles un lien, puis tu valides. Un seul prix, tout compris.', who: 'Automatisé' },
     { i: <Smartphone />, t: 'Paiement', d: 'Tu paies en Mobile Money. Confirmation instantanée, sans carte bancaire internationale.', who: 'Automatisé' },
     { i: <Users />, t: 'Achat fournisseur', d: 'Notre équipe achète tes articles chez le fournisseur international et les fait livrer à notre adresse de réception.', who: 'Notre équipe' },
-    { i: <Plane />, t: 'Transit international', d: 'Les colis sont groupés et expédiés vers Kinshasa par notre transitaire partenaire.', who: 'Partenaire' },
+    { i: <Plane />, t: 'Transit international', d: 'Les colis sont groupés et expédiés vers Brazzaville par notre transitaire partenaire.', who: 'Partenaire' },
     { i: <Landmark />, t: 'Douane', d: 'Nous gérons le dédouanement et toutes les formalités. Rien à faire de ton côté.', who: 'Partenaire' },
-    { i: <Truck />, t: 'Livraison locale', d: 'À domicile partout à Kinshasa, ou dans un point relais proche de chez toi.', who: 'Partenaire local' },
+    { i: <Truck />, t: 'Livraison locale', d: 'À domicile à Brazzaville et Pointe-Noire, ou dans un point relais proche de chez toi.', who: 'Partenaire local' },
   ]
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
@@ -188,7 +188,7 @@ export function Login() {
             <Field label="Nom complet"><input className="input" required value={r.name} onChange={(e) => setR({ ...r, name: e.target.value })} /></Field>
             <Field label="E-mail"><input className="input" type="email" required value={r.email} onChange={(e) => setR({ ...r, email: e.target.value })} /></Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Téléphone (Mobile Money)"><input className="input" required value={r.phone} onChange={(e) => setR({ ...r, phone: e.target.value })} placeholder="+243…" /></Field>
+              <Field label="Téléphone (Mobile Money)"><input className="input" required value={r.phone} onChange={(e) => setR({ ...r, phone: e.target.value })} placeholder="+242…" /></Field>
               <Field label="Commune"><select className="input" value={r.commune} onChange={(e) => setR({ ...r, commune: e.target.value })}>{COMMUNES.map((c) => <option key={c}>{c}</option>)}</select></Field>
             </div>
             <Field label="Mot de passe"><input className="input" type="password" minLength={6} required value={r.password} onChange={(e) => setR({ ...r, password: e.target.value })} /></Field>
@@ -201,10 +201,10 @@ export function Login() {
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Accès rapide démo</div>
         <div className="mt-3 grid grid-cols-2 gap-2">
           {[
-            ['Cliente (Grace)', 'grace@demo.cd', 'demo1234'],
-            ['Administratrice', 'admin@hhhgroup.cd', 'admin1234'],
-            ['Équipe achats', 'achats@hhhgroup.cd', 'ops1234'],
-            ['Service client', 'support@hhhgroup.cd', 'support1234'],
+            ['Cliente (Grace)', 'grace@demo.cg', 'demo1234'],
+            ['Administratrice', 'admin@hhhgroup.cg', 'admin1234'],
+            ['Équipe achats', 'achats@hhhgroup.cg', 'ops1234'],
+            ['Service client', 'support@hhhgroup.cg', 'support1234'],
           ].map(([l, e, p]) => <button key={e} className="btn-outline btn-sm" onClick={() => doLogin(e, p)}>{l}</button>)}
         </div>
       </div>

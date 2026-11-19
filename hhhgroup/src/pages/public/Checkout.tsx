@@ -107,7 +107,7 @@ export function Checkout() {
             <h2 className="font-bold">1. Livraison</h2>
             <div className="mt-3 space-y-2">
               <ModeCard m="relais" icon={<Store size={20} />} title="Point relais" desc={`Standard ${deliveryWindow('relais', settings)} · moins cher`} price={money(settings.relayDeliveryFee)} />
-              <ModeCard m="domicile" icon={<Home size={20} />} title="À domicile" desc={`Standard ${deliveryWindow('domicile', settings)} · partout à Kinshasa`} price={money(settings.homeDeliveryFee)} />
+              <ModeCard m="domicile" icon={<Home size={20} />} title="À domicile" desc={`Standard ${deliveryWindow('domicile', settings)} · Brazzaville & Pointe-Noire`} price={money(settings.homeDeliveryFee)} />
               <ModeCard m="express" icon={<Zap size={20} />} title="Express" desc={`${deliveryWindow('express', settings)} · à domicile`} price={`+${settings.expressSurchargePct} % transport`} disabled={!settings.expressEnabled} />
             </div>
             {mode === 'relais' ? (
@@ -132,7 +132,7 @@ export function Checkout() {
                 </button>
               ))}
             </div>
-            <div className="mt-4"><Field label="Numéro Mobile Money" hint="Tu recevras aussi les notifications de suivi sur ce numéro (WhatsApp/SMS)."><input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+243 8x xxx xxxx" /></Field></div>
+            <div className="mt-4"><Field label="Numéro Mobile Money" hint="Tu recevras aussi les notifications de suivi sur ce numéro (WhatsApp/SMS)."><input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+242 06 xxx xxxx" /></Field></div>
           </section>
 
           <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm">

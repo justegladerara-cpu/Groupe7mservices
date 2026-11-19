@@ -174,7 +174,7 @@ export function SettingsPage() {
               <Field label="Bon de bienvenue filleul"><input {...num('referralWelcome')} /></Field>
               <Field label="Marge cible (%)"><input {...num('targetMarginPct')} /></Field>
               <Field label="Coûts fixes mensuels" hint="Équipe, outils, loyer, marketing de base"><input {...num('monthlyFixedCosts')} /></Field>
-              <Field label="WhatsApp Business" hint="Format international"><input className="input" value={f.whatsappNumber} onChange={(e) => setF({ ...f, whatsappNumber: e.target.value })} placeholder="+243…" /></Field>
+              <Field label="WhatsApp Business" hint="Format international"><input className="input" value={f.whatsappNumber} onChange={(e) => setF({ ...f, whatsappNumber: e.target.value })} placeholder="+242…" /></Field>
               <Field label="E-mail support"><input className="input" value={f.supportEmail} onChange={(e) => setF({ ...f, supportEmail: e.target.value })} /></Field>
               <Field label="Ville de lancement"><input className="input" value={f.launchCity} onChange={(e) => setF({ ...f, launchCity: e.target.value })} /></Field>
             </div>

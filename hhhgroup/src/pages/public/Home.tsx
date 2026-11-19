@@ -11,7 +11,6 @@ export default function Home() {
   const orders = useStore((s) => s.orders)
   const reviews = useStore((s) => s.reviews.filter((r) => r.status === 'publie'))
   const users = useStore((s) => s.users)
-  const settings = useStore((s) => s.settings)
   const delivered = orders.filter((o) => o.status === 'livree')
   const avgDays = delivered.length ? Math.round(delivered.reduce((a, o) => a + daysBetween(o.createdAt, o.deliveredAt!), 0) / delivered.length) : 0
   const onTime = delivered.length ? Math.round((delivered.filter((o) => o.deliveredAt! <= o.promisedDate).length / delivered.length) * 100) : 0
@@ -27,7 +26,7 @@ export default function Home() {
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-2 md:py-20">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-gold-400 ring-1 ring-white/20">
-              <MapPin size={12} /> Disponible à {settings.launchCity}
+              <MapPin size={12} /> République du Congo · Brazzaville & Pointe-Noire
             </span>
             <h1 className="mt-4 text-4xl font-extrabold leading-tight md:text-5xl">Le commerce international, <span className="text-gold-400">enfin simple</span> pour le Congo.</h1>
             <p className="mt-4 max-w-lg text-lg text-brand-100">« Tu choisis, tu paies, nous nous occupons du reste. » Achète sur SHEIN et les grandes boutiques internationales, paie en Mobile Money, reçois ton colis chez toi.</p>
@@ -36,7 +35,7 @@ export default function Home() {
               <Link to="/lien" className="btn border border-white/30 bg-white/10 px-5 py-3 text-base text-white hover:bg-white/20"><Link2 size={18} /> Coller un lien</Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-brand-100">
-              <span className="flex items-center gap-2"><Smartphone size={16} className="text-gold-400" /> M-Pesa · Orange · Airtel</span>
+              <span className="flex items-center gap-2"><Smartphone size={16} className="text-gold-400" /> MTN MoMo · Airtel Money</span>
               <span className="flex items-center gap-2"><ShieldCheck size={16} className="text-gold-400" /> Prix tout compris</span>
               <span className="flex items-center gap-2"><Bell size={16} className="text-gold-400" /> Suivi WhatsApp</span>
             </div>
@@ -55,7 +54,7 @@ export default function Home() {
             </div>
             <div className="card absolute bottom-0 left-4 w-72 -rotate-2 p-4 text-slate-800 shadow-2xl">
               <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700"><Bell size={16} />WhatsApp · HHHGroup</div>
-              <p className="mt-2 text-sm text-slate-600">Grace, ton colis HHH-1148 est arrivé à Kinshasa. Nous gérons la douane, rien à faire de ton côté. 🎉</p>
+              <p className="mt-2 text-sm text-slate-600">Grace, ton colis HHH-1148 est arrivé à Brazzaville. Nous gérons la douane, rien à faire de ton côté. 🎉</p>
             </div>
           </div>
         </div>
@@ -111,7 +110,7 @@ export default function Home() {
         <div className="mb-5 flex items-end justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Les tendances du moment</h2>
-            <p className="text-sm text-slate-500">Les articles que tout Kinshasa veut, prix livrés au Congo.</p>
+            <p className="text-sm text-slate-500">Les articles que tout Brazzaville veut, prix livrés au Congo.</p>
           </div>
           <Link to="/catalogue" className="hidden items-center gap-1 text-sm font-semibold text-brand-700 sm:flex">Tout voir <ArrowRight size={16} /></Link>
         </div>
@@ -125,7 +124,7 @@ export default function Home() {
         <div className="grid items-center gap-6 overflow-hidden rounded-3xl bg-gradient-to-r from-gold-500 to-amber-400 p-8 md:grid-cols-[1.5fr_1fr]">
           <div>
             <h2 className="text-2xl font-extrabold text-slate-900 md:text-3xl">Tu as vu un article sur SHEIN ou TikTok ?</h2>
-            <p className="mt-2 text-slate-800">Colle simplement le lien. Notre équipe te donne le prix tout compris, livré à Kinshasa — en général le jour même.</p>
+            <p className="mt-2 text-slate-800">Colle simplement le lien. Notre équipe te donne le prix tout compris, livré au Congo — en général le jour même.</p>
           </div>
           <div className="md:text-right"><Link to="/lien" className="btn bg-slate-900 px-6 py-3 text-base text-white hover:bg-slate-800"><Link2 size={18} />Coller un lien</Link></div>
         </div>

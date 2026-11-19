@@ -120,7 +120,7 @@ export function ProductDetail() {
           {!valid && <p className="mt-2 text-xs text-amber-700">Choisis {!s && needSize ? 'une taille' : ''}{!s && needSize && !c && needColor ? ' et ' : ''}{!c && needColor ? 'une couleur' : ''} pour continuer.</p>}
           <div className="mt-6 grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm">
             <div className="flex gap-3"><Truck size={18} className="text-brand-700" /><div><b>Livraison Standard {deliveryWindow('domicile', settings)}</b><div className="text-slate-500">Reçu au plus tard le {fmtDate(eta.toISOString())} si tu commandes aujourd’hui</div></div></div>
-            <div className="flex gap-3"><Smartphone size={18} className="text-brand-700" /><div><b>Paiement Mobile Money</b><div className="text-slate-500">M-Pesa, Orange Money, Airtel Money</div></div></div>
+            <div className="flex gap-3"><Smartphone size={18} className="text-brand-700" /><div><b>Paiement Mobile Money</b><div className="text-slate-500">MTN MoMo, Airtel Money</div></div></div>
             <div className="flex gap-3"><ShieldCheck size={18} className="text-brand-700" /><div><b>Achat protégé</b><div className="text-slate-500">Article non conforme ou endommagé : remboursement, avoir ou renvoi</div></div></div>
           </div>
         </div>

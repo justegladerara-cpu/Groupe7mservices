@@ -164,7 +164,7 @@ export function Shipments() {
           <p className="text-sm text-slate-600">{sel.length} commande(s) · poids total ≈ <b>{weight.toFixed(2)} kg</b></p>
           <Field label="Transitaire"><select className="input" value={f.forwarderId} onChange={(e) => setF({ ...f, forwarderId: e.target.value })}>{activeFwd.map((x) => <option key={x.id} value={x.id}>{x.name} — {x.route}</option>)}</select></Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="N° de suivi"><input className="input" value={f.tracking} onChange={(e) => setF({ ...f, tracking: e.target.value })} placeholder="TCC-123456" /></Field>
+            <Field label="N° de suivi"><input className="input" value={f.tracking} onChange={(e) => setF({ ...f, tracking: e.target.value })} placeholder="CFE-123456" /></Field>
             <Field label="Arrivée estimée"><input type="date" className="input" value={f.eta} onChange={(e) => setF({ ...f, eta: e.target.value })} /></Field>
           </div>
           <Field label={`Coût transport réel (${settings.currencySymbol})`} hint="Réparti sur les commandes au prorata du poids."><input type="number" className="input" value={f.cost} onChange={(e) => setF({ ...f, cost: e.target.value })} /></Field>

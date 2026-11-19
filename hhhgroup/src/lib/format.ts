@@ -1,6 +1,6 @@
 import { useStore } from './store'
 
-export function fmtMoney(v: number, symbol = 'FC') {
+export function fmtMoney(v: number, symbol = 'FCFA') {
   return `${Math.round(v).toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g, ' ')} ${symbol}`
 }
 
