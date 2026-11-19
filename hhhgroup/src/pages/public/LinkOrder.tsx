@@ -7,7 +7,7 @@ import { useMoney, fmtDateTime } from '../../lib/format'
 import { Field, Pill } from '../../components/ui'
 import { LINK_STATUS } from '../../lib/constants'
 
-const WEIGHTS: Record<string, number> = { Vêtement: 0.4, Chaussures: 0.9, 'Sac / accessoire': 0.5, 'Beauté / parfum': 0.3, 'Bijou / montre': 0.15, 'Électronique': 0.5, 'Maison': 0.8 }
+export const WEIGHTS: Record<string, number> = { Vêtement: 0.4, Chaussures: 0.9, 'Sac / accessoire': 0.5, 'Beauté / parfum': 0.3, 'Bijou / montre': 0.15, 'Électronique': 0.5, 'Maison': 0.8 }
 
 export default function LinkOrder() {
   const user = useCurrentUser()

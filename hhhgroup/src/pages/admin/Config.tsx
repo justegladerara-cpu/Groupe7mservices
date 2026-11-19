@@ -5,8 +5,8 @@ import { PageTitle, Pill, Modal, Field } from '../../components/ui'
 import ProductVisual, { GLYPHS } from '../../components/ProductVisual'
 import { useMoney, uid } from '../../lib/format'
 import { CATEGORIES } from '../../lib/constants'
-import { allInclusiveUnitPrice, unitCostParts } from '../../lib/pricing'
-import type { Product, Category } from '../../lib/types'
+import { allInclusiveUnitPrice, unitCostParts, productPrice } from '../../lib/pricing'
+import type { Product, Category, PromoCode } from '../../lib/types'
 
 export function CatalogueAdmin() {
   const products = useStore((s) => s.products)
@@ -17,16 +17,18 @@ export function CatalogueAdmin() {
   const [q, setQ] = useState('')
   const [edit, setEdit] = useState<Product | null>(null)
   const list = products.filter((p) => !q || `${p.name} ${p.category}`.toLowerCase().includes(q.toLowerCase()))
-  const blank = (): Product => ({ id: uid('prd-'), name: '', category: 'Mode femme', supplierId: suppliers[0].id, supplierUrl: '', supplierPriceUsd: 10, weightKg: 0.4, image: '', glyph: 'dress', hue: 280, sizes: ['S', 'M', 'L'], colors: ['Noir'], description: '', tags: [], active: true, featured: false, createdAt: new Date().toISOString() })
+  const blank = (): Product => ({ id: uid('prd-'), name: '', category: 'Mode femme', supplierId: suppliers[0].id, supplierUrl: '', supplierPriceUsd: 10, weightKg: 0.4, image: '', glyph: 'dress', hue: 280, sizes: ['S', 'M', 'L'], colors: ['Noir'], description: '', tags: [], active: true, featured: false, promoPct: 0, isNew: true, sold: 0, createdAt: new Date().toISOString() })
   const parts = edit ? unitCostParts(edit.supplierPriceUsd, edit.weightKg, settings) : null
-  const price = edit ? allInclusiveUnitPrice(edit.supplierPriceUsd, edit.weightKg, settings) : 0
+  const price = edit ? productPrice(edit, settings) : 0
+  const promoCodes = useStore((s) => s.promoCodes)
+  const [pc, setPc] = useState<PromoCode | null>(null)
   return (
     <div>
       <PageTitle title="Catalogue" sub={`${products.filter((p) => p.active).length} articles en ligne · prix client calculé automatiquement depuis le prix fournisseur`} actions={<button className="btn-primary btn-sm" onClick={() => setEdit(blank())}><Plus size={14} />Nouvel article</button>} />
       <div className="relative mb-4"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input className="input pl-9" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[820px]">
-          <thead className="border-b border-slate-100 bg-slate-50"><tr><th className="table-head">Article</th><th className="table-head">Fournisseur</th><th className="table-head">Prix fournisseur</th><th className="table-head">Poids</th><th className="table-head">Prix client</th><th className="table-head">Statut</th><th className="table-head" /></tr></thead>
+          <thead className="border-b border-slate-100 bg-slate-50"><tr><th className="table-head">Article</th><th className="table-head">Fournisseur</th><th className="table-head">Prix fournisseur</th><th className="table-head">Poids</th><th className="table-head">Prix client</th><th className="table-head">Vendus</th><th className="table-head">Statut</th><th className="table-head" /></tr></thead>
           <tbody className="divide-y divide-slate-100">
             {list.map((p) => (
               <tr key={p.id} className="hover:bg-slate-50">
@@ -34,14 +36,46 @@ export function CatalogueAdmin() {
                 <td className="table-cell">{suppliers.find((s) => s.id === p.supplierId)?.name}</td>
                 <td className="table-cell">{p.supplierPriceUsd.toFixed(2)} $</td>
                 <td className="table-cell">{p.weightKg} kg</td>
-                <td className="table-cell font-semibold">{money(allInclusiveUnitPrice(p.supplierPriceUsd, p.weightKg, settings))}</td>
-                <td className="table-cell"><div className="flex gap-1">{p.active ? <Pill tone="green">En ligne</Pill> : <Pill>Masqué</Pill>}{p.featured && <Pill tone="violet">Tendance</Pill>}</div></td>
+                <td className="table-cell font-semibold">{money(productPrice(p, settings))}{p.promoPct > 0 && <div className="text-xs font-normal text-slate-400 line-through">{money(allInclusiveUnitPrice(p.supplierPriceUsd, p.weightKg, settings))}</div>}</td>
+                <td className="table-cell">{p.sold}</td>
+                <td className="table-cell"><div className="flex gap-1">{p.active ? <Pill tone="green">En ligne</Pill> : <Pill>Masqué</Pill>}{p.featured && <Pill tone="violet">Tendance</Pill>}{p.promoPct > 0 && <Pill tone="red">-{p.promoPct} %</Pill>}{p.isNew && <Pill tone="sky">Nouveau</Pill>}</div></td>
                 <td className="table-cell text-right"><button className="btn-ghost btn-sm" onClick={() => setEdit(p)}><Pencil size={14} /></button></td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <div className="mt-8 mb-3 flex items-center justify-between">
+        <h2 className="text-lg font-bold">Codes promo</h2>
+        <button className="btn-outline btn-sm" onClick={() => setPc({ id: uid('pc-'), code: '', pct: 10, minAmount: 0, description: '', active: true, uses: 0 })}><Plus size={14} />Code promo</button>
+      </div>
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[600px]">
+          <thead className="border-b border-slate-100 bg-slate-50"><tr><th className="table-head">Code</th><th className="table-head">Remise</th><th className="table-head">Minimum</th><th className="table-head">Utilisations</th><th className="table-head">Statut</th><th className="table-head" /></tr></thead>
+          <tbody className="divide-y divide-slate-100">
+            {promoCodes.map((c) => (
+              <tr key={c.id}><td className="table-cell"><span className="font-mono font-bold">{c.code}</span><div className="text-xs text-slate-400">{c.description}</div></td><td className="table-cell">-{c.pct} %</td><td className="table-cell">{money(c.minAmount)}</td><td className="table-cell">{c.uses}</td><td className="table-cell">{c.active ? <Pill tone="green">Actif</Pill> : <Pill>Inactif</Pill>}</td><td className="table-cell text-right"><button className="btn-ghost btn-sm" onClick={() => setPc(c)}><Pencil size={14} /></button></td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Modal open={!!pc} onClose={() => setPc(null)} title="Code promo">
+        {pc && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Code"><input className="input font-mono uppercase" value={pc.code} onChange={(e) => setPc({ ...pc, code: e.target.value.toUpperCase().replace(/\s/g, '') })} /></Field>
+              <Field label="Remise (%)"><input type="number" className="input" value={pc.pct} onChange={(e) => setPc({ ...pc, pct: Number(e.target.value) })} /></Field>
+            </div>
+            <Field label="Montant minimum d’articles"><input type="number" className="input" value={pc.minAmount} onChange={(e) => setPc({ ...pc, minAmount: Number(e.target.value) })} /></Field>
+            <Field label="Description"><input className="input" value={pc.description} onChange={(e) => setPc({ ...pc, description: e.target.value })} /></Field>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="accent-brand-700" checked={pc.active} onChange={(e) => setPc({ ...pc, active: e.target.checked })} />Actif</label>
+            <div className="flex gap-2">
+              <button className="btn-primary flex-1" disabled={!pc.code || pc.pct <= 0} onClick={() => { upsert('promoCodes', pc); setPc(null) }}>Enregistrer</button>
+              {promoCodes.some((x) => x.id === pc.id) && <button className="btn-outline text-rose-600" onClick={() => { remove('promoCodes', pc.id); setPc(null) }}><Trash2 size={16} /></button>}
+            </div>
+          </div>
+        )}
+      </Modal>
       <Modal open={!!edit} onClose={() => setEdit(null)} title={edit?.name || 'Nouvel article'} wide>
         {edit && (
           <div className="grid gap-5 md:grid-cols-[200px_1fr]">
@@ -59,6 +93,7 @@ export function CatalogueAdmin() {
                   <div className="flex justify-between"><span>Service</span><span>{money(parts.service)}</span></div>
                   <div className="flex justify-between"><span>Transport</span><span>{money(parts.transport)}</span></div>
                   <div className="flex justify-between"><span>Douane</span><span>{money(parts.customs)}</span></div>
+                  {edit.promoPct > 0 && <div className="flex justify-between text-rose-600"><span>Vente flash</span><span>-{edit.promoPct} %</span></div>}
                   <div className="mt-1 flex justify-between border-t border-slate-200 pt-1 text-sm font-bold"><span>Client</span><span className="text-brand-800">{money(price)}</span></div>
                 </div>
               )}
@@ -81,7 +116,9 @@ export function CatalogueAdmin() {
               <div className="flex gap-4 text-sm">
                 <label className="flex items-center gap-2"><input type="checkbox" className="accent-brand-700" checked={edit.active} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} />En ligne</label>
                 <label className="flex items-center gap-2"><input type="checkbox" className="accent-brand-700" checked={edit.featured} onChange={(e) => setEdit({ ...edit, featured: e.target.checked })} />Tendance (accueil)</label>
+                <label className="flex items-center gap-2"><input type="checkbox" className="accent-brand-700" checked={edit.isNew} onChange={(e) => setEdit({ ...edit, isNew: e.target.checked })} />Nouveauté</label>
               </div>
+              <Field label="Remise vente flash (%)" hint="0 = pas de promotion. Les articles en promo apparaissent dans « Ventes flash » sur l’accueil."><input type="number" min={0} max={70} className="input" value={edit.promoPct} onChange={(e) => setEdit({ ...edit, promoPct: Math.max(0, Math.min(70, Number(e.target.value))) })} /></Field>
               <div className="flex gap-2">
                 <button className="btn-primary flex-1" disabled={!edit.name || !edit.sizes.length || !edit.colors.length} onClick={() => { upsert('products', edit); setEdit(null) }}>Enregistrer</button>
                 {products.some((p) => p.id === edit.id) && <button className="btn-outline text-rose-600" onClick={() => { remove('products', edit.id); setEdit(null) }}><Trash2 size={16} /></button>}

@@ -2,7 +2,8 @@ import { HashRouter, Route, Routes, Navigate } from 'react-router-dom'
 import PublicLayout from './components/PublicLayout'
 import AdminLayout from './components/AdminLayout'
 import Home from './pages/public/Home'
-import { Catalogue, ProductDetail } from './pages/public/Catalogue'
+import { Catalogue, ProductDetail, Wishlist } from './pages/public/Catalogue'
+import CalculatorPage from './pages/public/Calculator'
 import LinkOrder from './pages/public/LinkOrder'
 import { Cart, Checkout, Payment } from './pages/public/Checkout'
 import { Tracking, HowItWorks, Faq, ReviewsPage, Login } from './pages/public/Info'
@@ -30,6 +31,8 @@ export default function App() {
           <Route path="catalogue" element={<Catalogue />} />
           <Route path="produit/:id" element={<ProductDetail />} />
           <Route path="lien" element={<LinkOrder />} />
+          <Route path="favoris" element={<Wishlist />} />
+          <Route path="calculateur" element={<CalculatorPage />} />
           <Route path="panier" element={<Cart />} />
           <Route path="commande" element={<RequireClient><Checkout /></RequireClient>} />
           <Route path="paiement/:id" element={<RequireClient><Payment /></RequireClient>} />

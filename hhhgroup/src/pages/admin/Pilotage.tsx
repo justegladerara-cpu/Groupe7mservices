@@ -159,6 +159,7 @@ export function SettingsPage() {
               <Field label="Domicile"><input {...num('homeDeliveryFee')} /></Field>
               <Field label="Point relais (remise)"><input {...num('relayDeliveryFee')} /></Field>
               <Field label="Supplément express (% transport)"><input {...num('expressSurchargePct')} /></Field>
+              <Field label="Relais offert dès (articles)" hint="0 = jamais offert"><input {...num('freeRelayThreshold')} /></Field>
               <Field label="Standard min (j)"><input {...num('standardDaysMin')} /></Field>
               <Field label="Standard max (j)"><input {...num('standardDaysMax')} /></Field>
               <div />

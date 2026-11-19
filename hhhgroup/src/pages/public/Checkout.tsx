@@ -50,7 +50,11 @@ export function Cart() {
         </div>
         <div className="card h-fit p-5">
           <div className="flex justify-between text-sm"><span>Articles (tout compris)</span><b>{money(subtotal)}</b></div>
-          <div className="mt-1 flex justify-between text-sm text-slate-500"><span>Livraison locale</span><span>dès {money(settings.relayDeliveryFee)}</span></div>
+          <div className="mt-1 flex justify-between text-sm text-slate-500"><span>Livraison point relais</span><span>{subtotal >= settings.freeRelayThreshold ? <b className="text-emerald-700">Offerte</b> : `dès ${money(settings.relayDeliveryFee)}`}</span></div>
+          <div className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-900">
+            {subtotal >= settings.freeRelayThreshold ? 'Bravo, la livraison en point relais est offerte !' : <>Plus que <b>{money(settings.freeRelayThreshold - subtotal)}</b> pour la livraison en point relais offerte</>}
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-amber-200"><div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.min(100, (subtotal / settings.freeRelayThreshold) * 100)}%` }} /></div>
+          </div>
           <p className="mt-3 rounded-lg bg-emerald-50 p-2 text-xs text-emerald-800">Transport international et douane déjà inclus. Aucun frais surprise.</p>
           <button className="btn-primary mt-4 w-full py-3" onClick={() => nav(user ? '/commande' : '/connexion?next=/commande')}>Passer la commande</button>
           <Link to="/catalogue" className="btn-ghost mt-2 w-full">Continuer mes achats</Link>
@@ -77,15 +81,21 @@ export function Checkout() {
   const [op, setOp] = useState(operators[0]?.id ?? '')
   const [useCredit, setUseCredit] = useState(true)
   const [accept, setAccept] = useState(false)
+  const checkPromo = useStore((s) => s.checkPromo)
+  const [promoInput, setPromoInput] = useState('')
+  const [promo, setPromo] = useState<{ code: string; pct: number } | null>(null)
+  const [promoMsg, setPromoMsg] = useState('')
   if (!user) return null
   if (!items.length) return <div className="mx-auto max-w-3xl px-4 py-16"><Empty title="Ton panier est vide" action={<Link to="/catalogue" className="btn-primary">Voir le catalogue</Link>} /></div>
-  const b = computeBreakdown(items, mode, settings, useCredit ? user.credit : 0)
+  const itemsTotal = items.reduce((a, i) => a + i.unitPrice * i.qty, 0)
+  const b = computeBreakdown(items, mode, settings, useCredit ? user.credit : 0, promo?.pct ?? 0)
+  const applyPromo = () => { const r = checkPromo(promoInput, itemsTotal); setPromoMsg(r.message); setPromo(r.ok ? { code: promoInput.trim().toUpperCase(), pct: r.pct } : null) }
   const eta = new Date(); eta.setDate(eta.getDate() + (mode === 'express' ? settings.expressDaysMax : settings.standardDaysMax))
   const valid = accept && phone.length >= 9 && op && (mode === 'relais' ? !!relay : address.length > 3)
   const opName = operators.find((o) => o.id === op)?.short ?? 'Mobile Money'
 
   const submit = () => {
-    const o = placeOrder({ delivery: mode, relayPointId: mode === 'relais' ? relay : undefined, commune: mode === 'relais' ? relayPoints.find((r) => r.id === relay)?.commune : commune, address: mode === 'relais' ? undefined : address, phone, operator: op, useCredit })
+    const o = placeOrder({ delivery: mode, relayPointId: mode === 'relais' ? relay : undefined, commune: mode === 'relais' ? relayPoints.find((r) => r.id === relay)?.commune : commune, address: mode === 'relais' ? undefined : address, phone, operator: op, useCredit, promoCode: promo?.code })
     nav(`/paiement/${o.id}`)
   }
 
@@ -147,7 +157,13 @@ export function Checkout() {
             {items.map((i, k) => <div key={k} className="flex justify-between gap-2 text-sm"><span className="truncate text-slate-600">{i.qty} × {i.name}</span><span className="whitespace-nowrap">{money(i.unitPrice * i.qty)}</span></div>)}
           </div>
           <div className="my-3 border-t border-dashed border-slate-200" />
-          <div className="flex justify-between text-sm"><span className="text-slate-600">Livraison {mode === 'relais' ? 'point relais' : mode === 'express' ? 'express' : 'à domicile'}</span><span>{money(b.total + b.discount - items.reduce((a, i) => a + i.unitPrice * i.qty, 0))}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-slate-600">Livraison {mode === 'relais' ? 'point relais' : mode === 'express' ? 'express' : 'à domicile'}</span><span>{b.total + b.discount + b.promo - itemsTotal === 0 ? <b className="text-emerald-700">Offerte</b> : money(b.total + b.discount + b.promo - itemsTotal)}</span></div>
+          {b.promo > 0 && <div className="mt-1 flex justify-between text-sm text-emerald-700"><span>Code {promo?.code} (−{promo?.pct} %)</span><span>−{money(b.promo)}</span></div>}
+          <div className="mt-3 flex gap-2">
+            <input id="promo-code" className="input py-1.5 text-sm uppercase" value={promoInput} onChange={(e) => setPromoInput(e.target.value)} placeholder="Code promo" />
+            <button type="button" className="btn-outline btn-sm" onClick={applyPromo}>Appliquer</button>
+          </div>
+          {promoMsg && <p className={`mt-1 text-xs ${promo ? 'text-emerald-700' : 'text-rose-600'}`}>{promoMsg}</p>}
           {user.credit > 0 && (
             <label className="mt-2 flex items-center justify-between gap-2 text-sm">
               <span className="flex items-center gap-2"><input type="checkbox" className="accent-brand-700" checked={useCredit} onChange={(e) => setUseCredit(e.target.checked)} />Utiliser mon crédit ({money(user.credit)})</span>

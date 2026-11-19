@@ -1,10 +1,17 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, CreditCard, Link2, MapPin, ShieldCheck, Bell, Scale, Smartphone, Package, Truck, Search, Star } from 'lucide-react'
+import { ArrowRight, CreditCard, Link2, MapPin, ShieldCheck, Bell, Scale, Smartphone, Package, Truck, Search, Star, Zap, Calculator } from 'lucide-react'
+import ProductVisual from '../../components/ProductVisual'
+import Countdown from '../../components/Countdown'
 import { useStore } from '../../lib/store'
 import ProductCard from '../../components/ProductCard'
 import { Stars } from '../../components/ui'
-import { daysBetween, fmtDate } from '../../lib/format'
+import { daysBetween, fmtDate, useMoney } from '../../lib/format'
 import { CATEGORIES } from '../../lib/constants'
+
+const CAT_GLYPH: Record<string, [string, number]> = {
+  'Mode femme': ['dress', 330], 'Mode homme': ['shirt', 210], Chaussures: ['sneaker', 260], 'Sacs & accessoires': ['bag', 25],
+  Beauté: ['lipstick', 350], 'Bijoux & montres': ['watch', 40], 'Tech & gadgets': ['headphones', 200], Maison: ['lamp', 35],
+}
 
 export default function Home() {
   const products = useStore((s) => s.products.filter((p) => p.active))
@@ -15,7 +22,13 @@ export default function Home() {
   const avgDays = delivered.length ? Math.round(delivered.reduce((a, o) => a + daysBetween(o.createdAt, o.deliveredAt!), 0) / delivered.length) : 0
   const onTime = delivered.length ? Math.round((delivered.filter((o) => o.deliveredAt! <= o.promisedDate).length / delivered.length) * 100) : 0
   const avgRating = reviews.length ? (reviews.reduce((a, r) => a + r.rating, 0) / reviews.length).toFixed(1) : '—'
-  const featured = products.filter((p) => p.featured).slice(0, 8)
+  const settings = useStore((s) => s.settings)
+  const recentIds = useStore((s) => s.recent)
+  const money = useMoney()
+  const flash = products.filter((p) => p.promoPct > 0).sort((a, b) => b.promoPct - a.promoPct)
+  const news = products.filter((p) => p.isNew)
+  const best = [...products].sort((a, b) => b.sold - a.sold).slice(0, 8)
+  const recent = recentIds.map((id) => products.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p)
 
   return (
     <div>
@@ -77,6 +90,107 @@ export default function Home() {
         </div>
       </section>
 
+      {/* CATÉGORIES EN ICÔNES */}
+      <section className="mx-auto max-w-7xl px-4 pt-10">
+        <div className="flex gap-4 overflow-x-auto pb-2 md:justify-between">
+          {CATEGORIES.map((c) => {
+            const g = CAT_GLYPH[c]
+            return (
+              <Link key={c} to={`/catalogue?cat=${encodeURIComponent(c)}`} className="group flex w-20 shrink-0 flex-col items-center gap-2 text-center">
+                <span className="h-16 w-16 overflow-hidden rounded-full ring-2 ring-white shadow transition group-hover:ring-brand-300"><ProductVisual glyph={g[0]} hue={g[1]} /></span>
+                <span className="text-xs font-medium leading-tight text-slate-700">{c}</span>
+              </Link>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* VENTES FLASH */}
+      {flash.length > 0 && (
+        <section className="mx-auto mt-8 max-w-7xl px-4">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-r from-rose-600 to-orange-500 p-4 md:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-white">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="flex items-center gap-2 text-xl font-extrabold"><Zap size={22} className="fill-yellow-300 text-yellow-300" />{settings.flashSaleTitle}</h2>
+                <span className="flex items-center gap-2 text-sm">Se termine dans <Countdown /></span>
+              </div>
+              <Link to="/catalogue?promo=1" className="flex items-center gap-1 text-sm font-semibold">Tout voir <ArrowRight size={16} /></Link>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {flash.map((p) => <ProductCard key={p.id} p={p} compact />)}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* BANNIÈRES PROMO */}
+      <section className="mx-auto mt-8 grid max-w-7xl gap-4 px-4 md:grid-cols-3">
+        <div className="rounded-2xl bg-brand-100 p-5">
+          <div className="text-xs font-bold uppercase tracking-wide text-brand-700">Nouvelle cliente</div>
+          <div className="mt-1 text-xl font-extrabold text-brand-950">-10 % sur ta 1re commande</div>
+          <p className="mt-1 text-sm text-brand-900">Avec le code <span className="rounded bg-white px-1.5 py-0.5 font-mono font-bold">BIENVENUE10</span> dès 15 000 FCFA.</p>
+        </div>
+        <div className="rounded-2xl bg-emerald-100 p-5">
+          <div className="text-xs font-bold uppercase tracking-wide text-emerald-700">Point relais</div>
+          <div className="mt-1 text-xl font-extrabold text-emerald-950">Livraison relais offerte</div>
+          <p className="mt-1 text-sm text-emerald-900">Dès {money(settings.freeRelayThreshold)} d’articles, à Poto-Poto, Bacongo, Moungali, Talangaï ou Pointe-Noire.</p>
+        </div>
+        <Link to="/calculateur" className="rounded-2xl bg-amber-100 p-5 transition hover:bg-amber-200">
+          <div className="text-xs font-bold uppercase tracking-wide text-amber-700">Calculateur</div>
+          <div className="mt-1 flex items-center gap-2 text-xl font-extrabold text-amber-950"><Calculator size={20} />Combien ça coûte livré ?</div>
+          <p className="mt-1 text-sm text-amber-900">Entre le prix vu sur le site, on te donne le prix tout compris au Congo.</p>
+        </Link>
+      </section>
+
+      {/* NOUVEAUTÉS */}
+      {news.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 pt-10">
+          <div className="mb-4 flex items-end justify-between">
+            <div><h2 className="text-2xl font-bold text-slate-900">Nouveautés</h2><p className="text-sm text-slate-500">Arrivées cette semaine dans le catalogue.</p></div>
+            <Link to="/catalogue?sort=new" className="flex items-center gap-1 text-sm font-semibold text-brand-700">Tout voir <ArrowRight size={16} /></Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2">{news.map((p) => <ProductCard key={p.id} p={p} compact />)}</div>
+        </section>
+      )}
+
+      {/* MEILLEURES VENTES */}
+      <section className="mx-auto max-w-7xl px-4 py-10">
+        <div className="mb-5 flex items-end justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Meilleures ventes</h2>
+            <p className="text-sm text-slate-500">Les articles que tout Brazzaville commande, prix livrés au Congo.</p>
+          </div>
+          <Link to="/catalogue?sort=sold" className="hidden items-center gap-1 text-sm font-semibold text-brand-700 sm:flex">Tout voir <ArrowRight size={16} /></Link>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-5 lg:grid-cols-4">
+          {best.map((p, i) => (
+            <div key={p.id} className="relative">
+              <span className={`absolute -left-1 -top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-extrabold shadow ${i < 3 ? 'bg-gold-500 text-slate-900' : 'bg-white text-slate-600'}`}>{i + 1}</span>
+              <ProductCard p={p} />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* VUS RÉCEMMENT */}
+      {recent.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 pb-6">
+          <h2 className="mb-4 text-xl font-bold text-slate-900">Vus récemment</h2>
+          <div className="flex gap-3 overflow-x-auto pb-2">{recent.map((p) => <ProductCard key={p.id} p={p} compact />)}</div>
+        </section>
+      )}
+
+      {/* LIEN */}
+      <section className="mx-auto max-w-7xl px-4 py-6">
+        <div className="grid items-center gap-6 overflow-hidden rounded-3xl bg-gradient-to-r from-gold-500 to-amber-400 p-8 md:grid-cols-[1.5fr_1fr]">
+          <div>
+            <h2 className="text-2xl font-extrabold text-slate-900 md:text-3xl">Tu as vu un article sur SHEIN ou TikTok ?</h2>
+            <p className="mt-2 text-slate-800">Colle simplement le lien. Notre équipe te donne le prix tout compris, livré au Congo — en général le jour même.</p>
+          </div>
+          <div className="md:text-right"><Link to="/lien" className="btn bg-slate-900 px-6 py-3 text-base text-white hover:bg-slate-800"><Link2 size={18} />Coller un lien</Link></div>
+        </div>
+      </section>
+
       {/* 3 GESTES */}
       <section className="mx-auto max-w-7xl px-4 py-16">
         <div className="text-center">
@@ -95,38 +209,6 @@ export default function Home() {
               <p className="mt-1 text-sm text-slate-600">{s.d}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* CATÉGORIES */}
-      <section className="mx-auto max-w-7xl px-4">
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {CATEGORIES.map((c) => <Link key={c} to={`/catalogue?cat=${encodeURIComponent(c)}`} className="whitespace-nowrap rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-brand-300 hover:text-brand-800">{c}</Link>)}
-        </div>
-      </section>
-
-      {/* PRODUITS */}
-      <section className="mx-auto max-w-7xl px-4 py-10">
-        <div className="mb-5 flex items-end justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">Les tendances du moment</h2>
-            <p className="text-sm text-slate-500">Les articles que tout Brazzaville veut, prix livrés au Congo.</p>
-          </div>
-          <Link to="/catalogue" className="hidden items-center gap-1 text-sm font-semibold text-brand-700 sm:flex">Tout voir <ArrowRight size={16} /></Link>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-5 lg:grid-cols-4">
-          {featured.map((p) => <ProductCard key={p.id} p={p} />)}
-        </div>
-      </section>
-
-      {/* LIEN */}
-      <section className="mx-auto max-w-7xl px-4 py-6">
-        <div className="grid items-center gap-6 overflow-hidden rounded-3xl bg-gradient-to-r from-gold-500 to-amber-400 p-8 md:grid-cols-[1.5fr_1fr]">
-          <div>
-            <h2 className="text-2xl font-extrabold text-slate-900 md:text-3xl">Tu as vu un article sur SHEIN ou TikTok ?</h2>
-            <p className="mt-2 text-slate-800">Colle simplement le lien. Notre équipe te donne le prix tout compris, livré au Congo — en général le jour même.</p>
-          </div>
-          <div className="md:text-right"><Link to="/lien" className="btn bg-slate-900 px-6 py-3 text-base text-white hover:bg-slate-800"><Link2 size={18} />Coller un lien</Link></div>
         </div>
       </section>
 

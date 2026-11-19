@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, Home, LayoutGrid, Link2, Menu, ShoppingBag, User, X, PackageSearch, LogOut, Shield } from 'lucide-react'
+import { Bell, Home, LayoutGrid, Link2, Menu, ShoppingBag, User, X, PackageSearch, LogOut, Shield, Search, Heart, Zap } from 'lucide-react'
 import { useStore, useCurrentUser, isStaff } from '../lib/store'
 import { Logo } from './ui'
 import ChatWidget from './ChatWidget'
@@ -8,21 +8,46 @@ import { useEffect } from 'react'
 
 const NAV = [
   { to: '/catalogue', label: 'Catalogue' },
+  { to: '/catalogue?promo=1', label: 'Ventes flash', hot: true },
+  { to: '/catalogue?new=1', label: 'Nouveautés' },
   { to: '/lien', label: 'Commander par lien' },
+  { to: '/calculateur', label: 'Calculateur' },
   { to: '/suivi', label: 'Suivre un colis' },
   { to: '/comment-ca-marche', label: 'Comment ça marche' },
   { to: '/avis', label: 'Avis clients' },
 ]
+
+function SearchBox({ className = '' }: { className?: string }) {
+  const products = useStore((s) => s.products)
+  const [q, setQ] = useState('')
+  const [focus, setFocus] = useState(false)
+  const nav = useNavigate()
+  const hits = q.length >= 2 ? products.filter((p) => p.active && `${p.name} ${p.category}`.toLowerCase().includes(q.toLowerCase())).slice(0, 6) : []
+  const go = (e?: React.FormEvent) => { e?.preventDefault(); setFocus(false); nav(`/catalogue?q=${encodeURIComponent(q)}`) }
+  return (
+    <form onSubmit={go} className={`relative ${className}`}>
+      <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      <input value={q} onChange={(e) => setQ(e.target.value)} onFocus={() => setFocus(true)} onBlur={() => setTimeout(() => setFocus(false), 150)} className="w-full rounded-full border border-slate-300 bg-slate-50 py-2 pl-10 pr-24 text-sm outline-none focus:border-brand-500 focus:bg-white" placeholder="Robe, baskets, parfum, écouteurs…" aria-label="Rechercher" />
+      <button className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-brand-700 px-4 py-1.5 text-xs font-semibold text-white">Chercher</button>
+      {focus && hits.length > 0 && (
+        <div className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+          {hits.map((p) => <Link key={p.id} to={`/produit/${p.id}`} className="flex items-center justify-between gap-2 px-4 py-2 text-sm hover:bg-slate-50"><span className="truncate">{p.name}</span><span className="text-xs text-slate-400">{p.category}</span></Link>)}
+        </div>
+      )}
+    </form>
+  )
+}
 
 export default function PublicLayout() {
   const user = useCurrentUser()
   const cartCount = useStore((s) => s.cart.reduce((a, c) => a + c.qty, 0))
   const unread = useStore((s) => (user ? s.notifications.filter((n) => n.customerId === user.id && !n.read).length : 0))
   const logout = useStore((s) => s.logout)
+  const wishCount = useStore((s) => s.wishlist.length)
   const [open, setOpen] = useState(false)
   const nav = useNavigate()
   const loc = useLocation()
-  useEffect(() => { setOpen(false); window.scrollTo(0, 0) }, [loc.pathname])
+  useEffect(() => { setOpen(false); window.scrollTo(0, 0) }, [loc.pathname, loc.search])
 
   return (
     <div className="flex min-h-screen flex-col pb-16 md:pb-0">
@@ -33,12 +58,12 @@ export default function PublicLayout() {
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4">
           <button className="btn-ghost btn-sm md:hidden" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X size={20} /> : <Menu size={20} />}</button>
           <Link to="/"><Logo /></Link>
-          <nav className="ml-6 hidden items-center gap-1 md:flex">
-            {NAV.map((n) => (
-              <NavLink key={n.to} to={n.to} className={({ isActive }) => `rounded-lg px-3 py-2 text-sm font-medium ${isActive ? 'bg-brand-50 text-brand-800' : 'text-slate-600 hover:bg-slate-100'}`}>{n.label}</NavLink>
-            ))}
-          </nav>
+          <SearchBox className="mx-4 hidden max-w-xl flex-1 md:block" />
           <div className="ml-auto flex items-center gap-1">
+            <Link to="/favoris" className="relative hidden rounded-lg p-2 text-slate-600 hover:bg-slate-100 sm:block" aria-label="Favoris">
+              <Heart size={20} />
+              {wishCount > 0 && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">{wishCount}</span>}
+            </Link>
             {isStaff(user) && <Link to="/admin" className="btn-outline btn-sm hidden sm:inline-flex"><Shield size={14} />Back-office</Link>}
             {user && !isStaff(user) && (
               <Link to="/compte/notifications" className="relative rounded-lg p-2 text-slate-600 hover:bg-slate-100" aria-label="Notifications">
@@ -60,9 +85,16 @@ export default function PublicLayout() {
             )}
           </div>
         </div>
+        <div className="px-4 pb-3 md:hidden"><SearchBox /></div>
+        <nav className="mx-auto hidden max-w-7xl items-center gap-1 overflow-x-auto px-4 pb-2 md:flex">
+          {NAV.map((n) => (
+            <Link key={n.to} to={n.to} className={`flex items-center gap-1 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium ${loc.pathname + loc.search === n.to || (n.to === '/catalogue' && loc.pathname === '/catalogue' && !loc.search) ? 'bg-brand-50 text-brand-800' : n.hot ? 'text-rose-600 hover:bg-rose-50' : 'text-slate-600 hover:bg-slate-100'}`}>{n.hot && <Zap size={14} className="fill-rose-500" />}{n.label}</Link>
+          ))}
+        </nav>
         {open && (
           <nav className="border-t border-slate-100 bg-white px-4 py-3 md:hidden">
-            {NAV.map((n) => <NavLink key={n.to} to={n.to} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">{n.label}</NavLink>)}
+            {NAV.map((n) => <Link key={n.to} to={n.to} className={`block rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-slate-50 ${n.hot ? 'text-rose-600' : 'text-slate-700'}`}>{n.label}</Link>)}
+            <Link to="/favoris" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700">Mes favoris</Link>
             {isStaff(user) && <NavLink to="/admin" className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-brand-700">Back-office</NavLink>}
             <NavLink to="/faq" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700">FAQ & politique de retour</NavLink>
           </nav>
@@ -83,6 +115,8 @@ export default function PublicLayout() {
               <li><Link to="/catalogue" className="hover:text-white">Catalogue</Link></li>
               <li><Link to="/lien" className="hover:text-white">Commander avec un lien</Link></li>
               <li><Link to="/suivi" className="hover:text-white">Suivre mon colis</Link></li>
+              <li><Link to="/calculateur" className="hover:text-white">Calculateur de prix</Link></li>
+              <li><Link to="/favoris" className="hover:text-white">Mes favoris</Link></li>
               <li><Link to="/compte/parrainage" className="hover:text-white">Parrainage</Link></li>
             </ul>
           </div>

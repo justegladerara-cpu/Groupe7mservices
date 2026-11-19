@@ -126,6 +126,7 @@ export function OrderAdmin() {
                     <tr key={l}><td className="py-1.5">{l}</td><td className="py-1.5 text-right text-slate-500">{money(est)}</td><td className="py-1.5 text-right font-medium">{real !== undefined ? money(real) : <span className="text-slate-300">—</span>}</td></tr>
                   ))}
                   <tr><td className="py-1.5">Frais de service (inclus dans le prix)</td><td className="py-1.5 text-right text-slate-500">{money(o.breakdown.serviceFee)}</td><td /></tr>
+                  {(o.breakdown.promo ?? 0) > 0 && <tr><td className="py-1.5">Code promo {o.promoCode}</td><td className="py-1.5 text-right text-slate-500">−{money(o.breakdown.promo)}</td><td /></tr>}
                   {o.breakdown.discount > 0 && <tr><td className="py-1.5">Crédit parrainage utilisé</td><td className="py-1.5 text-right text-slate-500">−{money(o.breakdown.discount)}</td><td /></tr>}
                 </tbody>
               </table>

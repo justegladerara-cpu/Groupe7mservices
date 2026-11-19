@@ -6,17 +6,22 @@ import { buildSeed } from './seed'
 import type {
   Channel, Claim, DeliveryMode, LinkRequest, Order, OrderItem, OrderStatus, Review, Settings, User, Template,
 } from './types'
-import { allInclusiveUnitPrice, computeBreakdown, deliveryWindow, promisedDate } from './pricing'
+import { allInclusiveUnitPrice, computeBreakdown, deliveryWindow, promisedDate, productPrice } from './pricing'
 import { STATUS_FLOW, STATUS_LABEL, CLAIM_STATUS } from './constants'
 import { fmtMoney, fmtDate, uid } from './format'
 
 export interface CartLine { key: string; productId?: string; linkRequestId?: string; size?: string; color?: string; qty: number }
 
-type Collections = 'products' | 'suppliers' | 'forwarders' | 'couriers' | 'relayPoints' | 'operators' | 'risks' | 'cities' | 'users' | 'templates'
+type Collections = 'promoCodes' | 'products' | 'suppliers' | 'forwarders' | 'couriers' | 'relayPoints' | 'operators' | 'risks' | 'cities' | 'users' | 'templates'
 
 interface State extends SeedData {
   currentUserId: string | null
   cart: CartLine[]
+  wishlist: string[]
+  recent: string[]
+  toggleWishlist: (productId: string) => void
+  addRecent: (productId: string) => void
+  checkPromo: (code: string, itemsTotal: number) => { ok: boolean; pct: number; message: string }
   // auth
   login: (email: string, password: string) => User | null
   logout: () => void
@@ -29,7 +34,7 @@ interface State extends SeedData {
   clearCart: () => void
   cartItems: () => OrderItem[]
   // commandes
-  placeOrder: (d: { delivery: DeliveryMode; relayPointId?: string; commune?: string; address?: string; phone: string; operator: string; useCredit: boolean }) => Order
+  placeOrder: (d: { delivery: DeliveryMode; relayPointId?: string; commune?: string; address?: string; phone: string; operator: string; useCredit: boolean; promoCode?: string }) => Order
   simulatePayment: (orderId: string, by?: string) => void
   setStatus: (orderId: string, status: OrderStatus, by: string, note?: string) => void
   updateOrder: (orderId: string, patch: Partial<Order>) => void
@@ -92,6 +97,17 @@ export const baseStore = create<State>()(
         ...buildSeed(),
         currentUserId: null,
         cart: [],
+        wishlist: [],
+        recent: [],
+        toggleWishlist: (id) => set((st) => ({ wishlist: st.wishlist.includes(id) ? st.wishlist.filter((x) => x !== id) : [id, ...st.wishlist] })),
+        addRecent: (id) => set((st) => (st.recent[0] === id ? {} : { recent: [id, ...st.recent.filter((x) => x !== id)].slice(0, 12) })),
+        checkPromo: (code, itemsTotal) => {
+          const st = get()
+          const pc = st.promoCodes.find((x) => x.code.toLowerCase() === code.trim().toLowerCase())
+          if (!pc || !pc.active) return { ok: false, pct: 0, message: 'Code promo inconnu ou expiré.' }
+          if (itemsTotal < pc.minAmount) return { ok: false, pct: 0, message: `Ce code s’applique dès ${fmtMoney(pc.minAmount, st.settings.currencySymbol)} d’articles.` }
+          return { ok: true, pct: pc.pct, message: `${pc.code} appliqué : -${pc.pct} %` }
+        },
 
         login: (email, password) => {
           const u = get().users.find((x) => x.email.toLowerCase() === email.trim().toLowerCase() && x.password === password && x.active)
@@ -131,7 +147,7 @@ export const baseStore = create<State>()(
             if (c.productId) {
               const p = st.products.find((x) => x.id === c.productId)
               if (!p) return []
-              return [{ productId: p.id, name: p.name, image: p.image, glyph: p.glyph, hue: p.hue, size: c.size, color: c.color, qty: c.qty, supplierId: p.supplierId, supplierUrl: p.supplierUrl, supplierPriceUsd: p.supplierPriceUsd, weightKg: p.weightKg, unitPrice: allInclusiveUnitPrice(p.supplierPriceUsd, p.weightKg, st.settings) }]
+              return [{ productId: p.id, name: p.name, image: p.image, glyph: p.glyph, hue: p.hue, size: c.size, color: c.color, qty: c.qty, supplierId: p.supplierId, supplierUrl: p.supplierUrl, supplierPriceUsd: p.supplierPriceUsd, weightKg: p.weightKg, unitPrice: productPrice(p, st.settings) }]
             }
             const l = st.linkRequests.find((x) => x.id === c.linkRequestId)
             if (!l || !l.supplierPriceUsd) return []
@@ -143,11 +159,14 @@ export const baseStore = create<State>()(
           const st = get()
           const u = st.users.find((x) => x.id === st.currentUserId)!
           const items = st.cartItems()
-          const breakdown = computeBreakdown(items, d.delivery, st.settings, d.useCredit ? u.credit : 0)
+          const itemsTotal = items.reduce((a, i) => a + i.unitPrice * i.qty, 0)
+          const promo = d.promoCode ? st.checkPromo(d.promoCode, itemsTotal) : null
+          const breakdown = computeBreakdown(items, d.delivery, st.settings, d.useCredit ? u.credit : 0, promo?.ok ? promo.pct : 0)
           const now = new Date()
           const o: Order = {
             id: uid('ord-'), number: nextNumber('HHH', st.orders.map((x) => x.number)), customerId: u.id, items, delivery: d.delivery,
             relayPointId: d.relayPointId, commune: d.commune, address: d.address, phone: d.phone, paymentOperator: d.operator,
+            promoCode: promo?.ok ? d.promoCode!.trim().toUpperCase() : undefined,
             breakdown, total: breakdown.total, status: 'attente_paiement',
             history: [{ status: 'attente_paiement', at: now.toISOString(), by: 'Système' }],
             promisedDate: promisedDate(now, d.delivery, st.settings), realCosts: {}, internalNotes: '', createdAt: now.toISOString(),
@@ -155,6 +174,8 @@ export const baseStore = create<State>()(
           const linkIds = items.map((i) => i.linkRequestId).filter(Boolean) as string[]
           set({
             orders: [o, ...st.orders], cart: [],
+            promoCodes: st.promoCodes.map((x) => (o.promoCode && x.code === o.promoCode ? { ...x, uses: x.uses + 1 } : x)),
+            products: st.products.map((p) => { const q = items.filter((i) => i.productId === p.id).reduce((a, i) => a + i.qty, 0); return q ? { ...p, sold: p.sold + q } : p }),
             users: st.users.map((x) => (x.id === u.id ? { ...x, credit: x.credit - breakdown.discount, phone: x.phone || d.phone } : x)),
             linkRequests: st.linkRequests.map((l) => (linkIds.includes(l.id) ? { ...l, status: 'acceptee', orderId: o.id } : l)),
           })
@@ -315,11 +336,11 @@ export const baseStore = create<State>()(
         updateSettings: (patch) => set((st) => ({ settings: { ...st.settings, ...patch } })),
         toggleRoadmap: (id) => set((st) => ({ roadmap: st.roadmap.map((r) => (r.id === id ? { ...r, done: !r.done } : r)) })),
         log: (who, action) => set((st) => ({ audit: [{ id: uid('aud-'), at: new Date().toISOString(), who, action }, ...st.audit].slice(0, 500) })),
-        resetDemo: () => set({ ...buildSeed(), cart: [] }),
+        resetDemo: () => set({ ...buildSeed(), cart: [], wishlist: [], recent: [] }),
       }
     },
     {
-      name: 'hhhgroup-demo-cg-v1',
+      name: 'hhhgroup-demo-cg-v2',
       storage: createJSONStorage(() => {
         try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return localStorage } catch {
           const m = new Map<string, string>()

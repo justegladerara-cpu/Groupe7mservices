@@ -36,6 +36,9 @@ export interface Product {
   tags: string[]
   active: boolean
   featured: boolean
+  promoPct: number // remise vente flash (0 = aucune)
+  isNew: boolean
+  sold: number // nombre d'exemplaires vendus (preuve sociale)
   createdAt: string
 }
 
@@ -74,7 +77,8 @@ export interface PriceBreakdown {
   transport: number
   customs: number
   delivery: number
-  discount: number
+  discount: number // crédit parrainage / avoir
+  promo: number // code promo
   total: number
 }
 
@@ -96,6 +100,7 @@ export interface Order {
   address?: string
   phone: string
   paymentOperator: string
+  promoCode?: string
   paymentRef?: string
   paidAt?: string
   breakdown: PriceBreakdown
@@ -252,7 +257,11 @@ export interface Settings {
   launchCity: string
   quoteValidityDays: number
   paymentsLive: boolean
+  freeRelayThreshold: number // livraison point relais offerte dès ce montant d'articles
+  flashSaleTitle: string
 }
+
+export interface PromoCode { id: string; code: string; pct: number; minAmount: number; description: string; active: boolean; uses: number }
 
 export interface Template { id: OrderStatus | 'devis_pret' | 'reclamation_maj' | 'bienvenue'; title: string; body: string; channels: Channel[] }
 

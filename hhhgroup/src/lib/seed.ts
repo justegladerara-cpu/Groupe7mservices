@@ -1,6 +1,6 @@
 import type {
   Claim, City, Courier, Forwarder, LinkRequest, Notification, Order, OrderItem, OrderStatus, PaymentOperator, Product,
-  PurchaseBatch, RelayPoint, Review, Risk, RoadmapTask, Settings, Shipment, Supplier, Template, User, Category, AuditEntry,
+  PurchaseBatch, RelayPoint, Review, PromoCode, Risk, RoadmapTask, Settings, Shipment, Supplier, Template, User, Category, AuditEntry,
 } from './types'
 import { allInclusiveUnitPrice, computeBreakdown, promisedDate } from './pricing'
 import { STATUS_FLOW, STATUS_LABEL, STATUS_CLIENT_TEXT } from './constants'
@@ -32,6 +32,8 @@ export const DEFAULT_SETTINGS: Settings = {
   launchCity: 'Brazzaville',
   quoteValidityDays: 3,
   paymentsLive: false,
+  freeRelayThreshold: 35000,
+  flashSaleTitle: 'Ventes flash',
 }
 
 // Générateur pseudo-aléatoire déterministe : les données de démo sont identiques à chaque réinitialisation
@@ -93,7 +95,10 @@ export function buildProducts(): Product[] {
     name: p[0], category: p[1], supplierId: p[2], supplierPriceUsd: p[3], weightKg: p[4], glyph: p[5], hue: p[6],
     sizes: p[7], colors: p[8], description: p[9],
     supplierUrl: SUPPLIERS.find((s) => s.id === p[2])!.website,
-    image: '', tags: [], active: true, featured: [0, 3, 11, 13, 21, 25, 14, 9].includes(i), createdAt: created,
+    image: '', tags: [], active: true, featured: [0, 3, 11, 13, 21, 25, 14, 9].includes(i),
+    promoPct: ({ 1: 20, 4: 25, 10: 15, 14: 30, 17: 20, 26: 15, 30: 25, 22: 10 } as Record<number, number>)[i] ?? 0,
+    isNew: [2, 7, 12, 19, 21, 25, 28, 31].includes(i), sold: 0,
+    createdAt: [2, 7, 12, 19, 21, 25, 28, 31].includes(i) ? new Date('2026-11-05').toISOString() : created,
   }))
 }
 
@@ -181,8 +186,14 @@ export interface SeedData {
   users: User[]; products: Product[]; orders: Order[]; linkRequests: LinkRequest[]; suppliers: Supplier[]
   batches: PurchaseBatch[]; shipments: Shipment[]; forwarders: Forwarder[]; couriers: Courier[]; relayPoints: RelayPoint[]
   operators: PaymentOperator[]; notifications: Notification[]; reviews: Review[]; claims: Claim[]; risks: Risk[]
-  roadmap: RoadmapTask[]; cities: City[]; settings: Settings; templates: Template[]; audit: AuditEntry[]
+  roadmap: RoadmapTask[]; cities: City[]; settings: Settings; templates: Template[]; audit: AuditEntry[]; promoCodes: PromoCode[]
 }
+
+export const PROMO_CODES: PromoCode[] = [
+  { id: 'pc-1', code: 'BIENVENUE10', pct: 10, minAmount: 15000, description: '-10 % sur la première commande', active: true, uses: 37 },
+  { id: 'pc-2', code: 'BRAZZA15', pct: 15, minAmount: 40000, description: '-15 % dès 40 000 FCFA d’articles', active: true, uses: 12 },
+  { id: 'pc-3', code: 'NOEL2026', pct: 20, minAmount: 50000, description: 'Fêtes de fin d’année (à activer en décembre)', active: false, uses: 0 },
+]
 
 const REVIEW_TEXTS = [
   'Enfin une plateforme sérieuse ! Ma robe est arrivée en 19 jours, exactement comme sur la photo.',
@@ -403,9 +414,11 @@ export function buildSeed(): SeedData {
   })
 
   notifications.sort((a, b) => b.at.localeCompare(a.at))
+  // Exemplaires vendus : historique de commandes + ventes antérieures (lancement WhatsApp)
+  for (const p of products) p.sold = 25 + Math.floor(r() * 260) + orders.reduce((a, o) => a + o.items.filter((i) => i.productId === p.id).reduce((x, i) => x + i.qty, 0), 0)
   return {
     users, products, orders, linkRequests, suppliers: SUPPLIERS, batches, shipments, forwarders: FORWARDERS, couriers: COURIERS,
     relayPoints: RELAY_POINTS, operators: OPERATORS, notifications, reviews, claims, risks: RISKS, roadmap: ROADMAP, cities: CITIES,
-    settings, templates: TEMPLATES, audit: [{ id: 'aud-1', at: now.toISOString(), who: 'Système', action: 'Données de démonstration chargées' }],
+    settings, templates: TEMPLATES, promoCodes: PROMO_CODES.map((x) => ({ ...x })), audit: [{ id: 'aud-1', at: now.toISOString(), who: 'Système', action: 'Données de démonstration chargées' }],
   }
 }

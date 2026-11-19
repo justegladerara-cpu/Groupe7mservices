@@ -16,12 +16,19 @@ export function allInclusiveUnitPrice(usd: number, weightKg: number, s: Settings
   return roundUp(p.product + p.service + p.transport + p.customs, s.roundTo)
 }
 
-export function deliveryFee(mode: DeliveryMode, s: Settings) {
-  if (mode === 'relais') return s.relayDeliveryFee
+/** Prix affiché au client, remise vente flash incluse */
+export function productPrice(p: { supplierPriceUsd: number; weightKg: number; promoPct?: number }, s: Settings) {
+  const full = allInclusiveUnitPrice(p.supplierPriceUsd, p.weightKg, s)
+  if (!p.promoPct) return full
+  return roundUp(full * (1 - p.promoPct / 100), s.roundTo)
+}
+
+export function deliveryFee(mode: DeliveryMode, s: Settings, itemsTotal = 0) {
+  if (mode === 'relais') return s.freeRelayThreshold > 0 && itemsTotal >= s.freeRelayThreshold ? 0 : s.relayDeliveryFee
   return s.homeDeliveryFee
 }
 
-export function computeBreakdown(items: OrderItem[], mode: DeliveryMode, s: Settings, credit = 0): PriceBreakdown {
+export function computeBreakdown(items: OrderItem[], mode: DeliveryMode, s: Settings, credit = 0, promoPct = 0): PriceBreakdown {
   let productCost = 0, transport = 0, customs = 0, itemsTotal = 0
   for (const it of items) {
     const p = unitCostParts(it.supplierPriceUsd, it.weightKg, s)
@@ -32,18 +39,20 @@ export function computeBreakdown(items: OrderItem[], mode: DeliveryMode, s: Sett
   }
   let express = 0
   if (mode === 'express') express = roundUp(transport * (s.expressSurchargePct / 100), s.roundTo)
-  const delivery = deliveryFee(mode, s) + express
-  const gross = itemsTotal + delivery
+  const promo = promoPct > 0 ? Math.round((itemsTotal * promoPct) / 100) : 0
+  const delivery = deliveryFee(mode, s, itemsTotal) + express
+  const gross = itemsTotal - promo + delivery
   const discount = Math.min(credit, Math.floor(gross * 0.5))
   const total = gross - discount
-  const serviceFee = itemsTotal - productCost - transport - customs
+  const serviceFee = itemsTotal - promo - productCost - transport - customs
   return {
     productCost: Math.round(productCost),
     serviceFee: Math.round(serviceFee),
     transport: Math.round(transport + express),
     customs: Math.round(customs),
-    delivery: deliveryFee(mode, s),
+    delivery: deliveryFee(mode, s, itemsTotal),
     discount,
+    promo,
     total,
   }
 }

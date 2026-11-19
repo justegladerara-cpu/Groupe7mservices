@@ -118,6 +118,7 @@ export function MyOrderDetail() {
             </div>
             <div className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-sm">
               <div className="flex justify-between"><span className="text-slate-500">Livraison {o.delivery === 'relais' ? 'point relais' : 'à domicile'}</span><span>{money(o.breakdown.delivery)}</span></div>
+              {(o.breakdown.promo ?? 0) > 0 && <div className="flex justify-between text-emerald-700"><span>Code promo {o.promoCode}</span><span>−{money(o.breakdown.promo)}</span></div>}
               {o.breakdown.discount > 0 && <div className="flex justify-between text-emerald-700"><span>Crédit utilisé</span><span>−{money(o.breakdown.discount)}</span></div>}
               <div className="flex justify-between text-base font-bold"><span>Total payé</span><span>{money(o.total)}</span></div>
             </div>
